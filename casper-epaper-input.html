@@ -22,9 +22,9 @@
 <!--link rel="import" href="../iron-autogrow-textarea/iron-autogrow-textarea.html"-->
 <link rel="import" href="../iron-input/iron-input.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
-<link rel="import" href="../casper-epaper/casper-epaper-tooltip.html">
-<link rel="import" href="../casper-epaper/casper-epaper-datepicker.html">
-<link rel="import" href="../casper-epaper/casper-epaper-combolist.html">
+<link rel="import" href="casper-epaper-tooltip.html">
+<link rel="import" href="casper-epaper-datepicker.html">
+<link rel="import" href="casper-epaper-combolist.html">
 
 <!--
 `casper-epaper-input` customised input component that overlays the rendering canvas
@@ -177,18 +177,18 @@
         this._comboListQuery   = undefined;
 
         // @TODO port to 2.0
-        this.listen(this.$.combo, 'on-combo-list-closed'      , '_onComboListClosed');
-        this.listen(this.$.combo, 'on-combo-selection-changed', '_onComboSelectionChanged');
-        this.listen(this.$.date , 'date-overlay-closed'       , '_onDateOverlayClosed');
+        //this.listen(this.$.combo, 'on-combo-list-closed'      , '_onComboListClosed');
+        //this.listen(this.$.combo, 'on-combo-selection-changed', '_onComboSelectionChanged');
+        //this.listen(this.$.date , 'date-overlay-closed'       , '_onDateOverlayClosed');
       }
 
       disconnectedCallback () {
         super.disconnectedCallback();
         this._clearModel();
         // @TODO port to 2.0
-        this.unlisten(this.$.combo, 'on-combo-list-closed'      , '_onComboListClosed');
-        this.unlisten(this.$.combo, 'on-combo-selection-changed', '_onComboSelectionChanged');
-        this.unlisten(this.$.date , 'date-overlay-closed'       , '_onDateOverlayClosed');
+        //this.unlisten(this.$.combo, 'on-combo-list-closed'      , '_onComboListClosed');
+        //this.unlisten(this.$.combo, 'on-combo-selection-changed', '_onComboSelectionChanged');
+        //this.unlisten(this.$.date , 'date-overlay-closed'       , '_onDateOverlayClosed');
       }
 
       /**

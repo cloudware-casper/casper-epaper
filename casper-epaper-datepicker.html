@@ -34,7 +34,7 @@
       return this.inputBox;
     };
 
-    class CasperEpaperDatepicker {
+    class CasperEpaperDatepicker extends Polymer.Element {
 
       static get is () {
         return 'casper-epaper-datepicker';
@@ -59,7 +59,7 @@
 
       ready () {
         super.ready();
-        this.$.picker._input = inputBridge.bind(this);
+        //this.$.picker._input = inputBridge.bind(this);
         this.$.picker.$.dropdown.noOverlap = true;
       }
 
@@ -67,15 +67,15 @@
         super.connectedCallback();
         this._closingKey = undefined;
         //  @TODO port to 2.0
-        this.listen(this.$.picker.$.dropdown, 'iron-overlay-opened', '_onOverlayOpened');
-        this.listen(this.$.picker.$.dropdown, 'iron-overlay-closed', '_onOverlayClosed');
+        //this.listen(this.$.picker.$.dropdown, 'iron-overlay-opened', '_onOverlayOpened');
+        //this.listen(this.$.picker.$.dropdown, 'iron-overlay-closed', '_onOverlayClosed');
       }
 
       disconnectedCallback () {
         super.disconnectedCallback();
         //  @TODO port to 2.0
-        this.unlisten(this.$.picker.$.dropdown, 'iron-overlay-opened', '_onOverlayOpened');
-        this.unlisten(this.$.picker.$.dropdown, 'iron-overlay-closed', '_onOverlayClosed');
+        //this.unlisten(this.$.picker.$.dropdown, 'iron-overlay-opened', '_onOverlayOpened');
+        //this.unlisten(this.$.picker.$.dropdown, 'iron-overlay-closed', '_onOverlayClosed');
       }
 
       open () {

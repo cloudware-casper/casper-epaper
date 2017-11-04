@@ -112,13 +112,13 @@
 
       connectedCallback () {
         super.connectedCallback();
-        this.listen(this, 'tap', 'hide');
+        //this.listen(this, 'tap', 'hide'); @TODO port 2.0
         this._showing = true;
       }
 
       disconnectedCallback () {
         super.disconnectedCallback();
-        this.unlisten(this, 'tap', 'hide');
+        //this.unlisten(this, 'tap', 'hide'); @TODO port 2.0
       }
 
       /**
@@ -134,10 +134,21 @@
       }
 
       setVisible (visible) {
-        this.toggleClass('hidden' , !visible, this.$.canvas);
+        if ( visible ) {
+          this.$.canvas.classList.remove('hidden');
+          this.$.text.classList.remove('hidden');
+          this.$.canvas.classList.add('visible');
+          this.$.text.classList.add('visible');
+        } else {
+          this.$.canvas.classList.add('hidden');
+          this.$.text.classList.add('hidden');
+          this.$.canvas.classList.remove('visible');
+          this.$.text.classList.remove('visible');
+        }
+        /*this.toggleClass('hidden' , !visible, this.$.canvas);
         this.toggleClass('hidden' , !visible, this.$.text);
         this.toggleClass('visible',  visible, this.$.canvas);
-        this.toggleClass('visible',  visible, this.$.text);
+        this.toggleClass('visible',  visible, this.$.text);*/
       }
 
       /**

@@ -27,7 +27,7 @@
 <link rel="import" href="../paper-fab/paper-fab.html">
 <link rel="import" href="../paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../paper-styles/shadow.html">
-<link rel="import" href="../casper-epaper/casper-epaper-htmldiv.html">
+<link rel="import" href="casper-epaper-htmldiv.html">
 
 <!--
 `casper-combolist`
@@ -46,12 +46,12 @@ An auxiliary combo list for the casper-epaper editor
       iron-dropdown {
         margin:  0px;
         padding: 0px;
-        @apply(--shadow-elevation-8dp);
+        @apply --shadow-elevation-8dp;
       }
 
       .dropdown-content {
         background-color: var(--primary-background-color);
-        @apply(--layout-vertical);
+        @apply --layout-vertical;
         font-size: 12px;
         overflow: hidden;
       }
@@ -63,7 +63,7 @@ An auxiliary combo list for the casper-epaper editor
       }
 
       iron-list {
-        @apply(--layout-flex-auto);
+        @apply --layout-flex-auto;
       }
 
       iron-icon {
@@ -313,12 +313,12 @@ An auxiliary combo list for the casper-epaper editor
 
       connectedCallback () {
         super.connectedCallback();
-        this.listen(this.$.input, 'keydown', '_keyDownHandler'); // @TODO remove legacy
+        //this.listen(this.$.input, 'keydown', '_keyDownHandler'); // @TODO Port to 2.0 
       }
 
       disconnectedCallback () {
         super.disconnectedCallback();
-        this.unlisten(this.$.input, 'keydown', '_keyDownHandler'); // @TODO remove legacy
+        //this.unlisten(this.$.input, 'keydown', '_keyDownHandler'); // @TODO Port to 2.0 
       }
 
       /**

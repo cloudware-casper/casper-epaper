@@ -23,10 +23,10 @@
 <link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../casper-common-ui/casper-iconset.html">
 <link rel="import" href="../casper-common-ui/casper-i18n-behavior.html">
-<link rel="import" href="../casper-epaper/casper-epaper-imports.html">
-<link rel="import" href="../casper-epaper/casper-epaper-tooltip.html">
-<link rel="import" href="../casper-epaper/casper-epaper-input.html">
-<link rel="import" href="../casper-epaper/casper-epaper-servertip-helper.html">
+<link rel="import" href="casper-epaper-imports.html">
+<link rel="import" href="casper-epaper-tooltip.html">
+<link rel="import" href="casper-epaper-input.html">
+<link rel="import" href="casper-epaper-servertip-helper.html">
 
 <!--
   `<awesome-sauce>` injects a healthy dose of awesome into your page.
@@ -75,7 +75,7 @@
       }
 
     </style>
-    <paper-card width="[[width]]" height="[[height]]">
+    <paper-card>
       <canvas id="canvas" width="[[width]]" height="[[height]]"></canvas>
       <casper-epaper-input id="input"></casper-epaper-input>
       <casper-epaper-tooltip id="tooltip"></casper-epaper-tooltip>
@@ -97,6 +97,7 @@
 
       static get properties () {
         return {
+          socket: Object,
           /** component width in px */
           width: {
             type: Number,
@@ -170,7 +171,7 @@
         super.ready ();
         this._calculateAttributeDefaults();
 
-        this._socket            = new EPaperSocket(this, this.url, this.port, this.uri);
+        this._socket            = this.socket;
         this._canvas            = this.$.canvas;
         this._canvas_width      = this._canvas.width;
         this._canvas_height     = this._canvas.height;
@@ -247,18 +248,18 @@
       connectedCallback () {
         super.connectedCallback();
         // @TODO port to 2.0
-        this.listen(this.$.canvas, 'mousemove', '_moveHandler');
-        this.listen(this.$.canvas, 'mousedown', '_mouseDownHandler');
-        this.listen(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
+        //this.listen(this.$.canvas, 'mousemove', '_moveHandler');
+        //this.listen(this.$.canvas, 'mousedown', '_mouseDownHandler');
+        //this.listen(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
         this._deactivateLineContextMenu();
       }
 
       disconnectedCallback () {
         super.disconnectedCallback();
         // @TODO port to 2.0
-        this.unlisten(this.$.canvas, 'mousemove', '_moveHandler');
-        this.unlisten(this.$.canvas, 'mousedown', '_mouseDownHandler');
-        this.unlisten(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
+        //this.unlisten(this.$.canvas, 'mousemove', '_moveHandler');
+        //this.unlisten(this.$.canvas, 'mousedown', '_mouseDownHandler');
+        //this.unlisten(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
       }
 
       isPrintableDocument () {

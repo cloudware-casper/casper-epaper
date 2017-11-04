@@ -18,7 +18,7 @@
   -
  -->
 
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-dropdown/iron-dropdown.html">
@@ -179,6 +179,7 @@ An auxiliary combo list for the casper-epaper editor
      * @param char character to collate
      * @return the collated character
      */
+     // @TODO static fucntion in ES6 or use browser support for collation
     var _collateChar = function (char) {
       switch ( char.charCodeAt(0) ) {
         case 65:  /* 'A' */ return 'a';
@@ -263,38 +264,44 @@ An auxiliary combo list for the casper-epaper editor
       return -1;
     };
 
-    Polymer({
+    class CasperEpaperCombolist extends Polymer.Element {
 
-      is: 'casper-epaper-combolist',
-      properties: {
-        addMessage: {
-          type:    String,
-          default: 'Add coisa'
-        },
-        selectedItem: {
-          type: Object,
-          observer: '_onSelectionChanged'
-        },
-        _query: {
-          type: String,
-          observer: '_onQueryChanged'
-        },
-        _filteredItems: {
-          type: Array
-        },
-        displayFields: {
-          type: Array
-        },
-        items: {
-          type: Array
-        },
-        showFab: {
-          type: Boolean,
-          value: false
-        }
-      },
+      static get is () {
+        return 'casper-epaper-combolist';
+      }
 
-      ready: function () {
+      static get properties () {
+        return {
+          addMessage: {
+            type:    String,
+            default: 'Add coisa'
+          },
+          selectedItem: {
+            type: Object,
+            observer: '_onSelectionChanged'
+          },
+          _query: {
+            type: String,
+            observer: '_onQueryChanged'
+          },
+          _filteredItems: {
+            type: Array
+          },
+          displayFields: {
+            type: Array
+          },
+          items: {
+            type: Array
+          },
+          showFab: {
+            type: Boolean,
+            value: false
+          }
+        };
+      }
+
+      ready () {
+        super.ready();
         this._canvas        = undefined;
         this._modelCache    = {};
         this._closingKey    = undefined;
@@ -302,15 +309,17 @@ An auxiliary combo list for the casper-epaper editor
         this._selectedId    = undefined;
         this._notifiyIdOnly = false;
         this.displayFields  = ['id', 'description'];
-      },
+      }
 
-      attached: function () {
-        this.listen(this.$.input, 'keydown', '_keyDownHandler');
-      },
+      connectedCallback () {
+        super.connectedCallback();
+        this.listen(this.$.input, 'keydown', '_keyDownHandler'); // @TODO remove legacy
+      }
 
-      detached: function () {
-        this.unlisten(this.$.input, 'keydown', '_keyDownHandler');
-      },
+      disconnectedCallback () {
+        super.disconnectedCallback();
+        this.unlisten(this.$.input, 'keydown', '_keyDownHandler'); // @TODO remove legacy
+      }
 
       /**
        * Defines the element that controls the dialog positioning
@@ -319,29 +328,29 @@ An auxiliary combo list for the casper-epaper editor
        *
        * @param element The HTML element
        */
-      setPositionTarget: function (element) {
+      setPositionTarget (element) {
         this.$.dialog.positionTarget = element;
-      },
+      }
 
-      setFitInto: function (element) {
+      setFitInto (element) {
         this.$.dialog.fitInto = element;
-      },
+      }
 
-      setCasperBinding: function (binding) {
+      setCasperBinding (binding) {
         this._binding = binding;
         if ( this._binding !== undefined ) {
           this.displayFields = this._binding.attachment.display;
         } else {
           this.displayFields = [];
         }
-      },
+      }
 
       /**
        * Show or hide the widget
        *
        * @param a_visible true to make visible, false to hide this widget
        */
-      setVisible: function (a_visible, a_query) {
+      setVisible (a_visible, a_query) {
         this._closingKey = undefined;
         if (a_visible) {
           this._query = a_query
@@ -350,43 +359,43 @@ An auxiliary combo list for the casper-epaper editor
         } else {
           this.$.dialog.close();
         }
-      },
+      }
 
       /**
        * @brief Returns true if the widget is visible
        *
        * @return true if visible, false if the widget is hidden
        */
-      isVisible: function () {
+      isVisible () {
         return this.$.dialog.opened;
-      },
+      }
 
       /**
        * Returns the number of items in the list
        *
        * @return number of records in model
        */
-      getSize: function () {
+      getSize () {
         return this.items !== undefined ? this.items.length : 0;
-      },
+      }
 
       /**
        * Returns the ID of the currently selected item
        *
        * @return the item id
        */
-      getSelectedId: function () {
+      getSelectedId () {
         return this._selectedId;
-      },
+      }
 
       /**
        * @brief Returns the ID of the item that was initially selected
        *
        * @return the initial item id
        */
-      getInitialId: function () {
+      getInitialId () {
         return this._initialId;
-      },
+      }
 
       /**
        * @brief Return a field of the current selected model item
@@ -395,12 +404,12 @@ An auxiliary combo list for the casper-epaper editor
        *
        * @returns the request field or empty string if there's none
        */
-      getSelectedField: function (a_index) {
+      getSelectedField (a_index) {
         if ( this.items === undefined || this.selectedItem === undefined ) {
           return undefined;
         }
         return this.selectedItem[this.displayFields[a_index]];
-      },
+      }
 
       /**
        * Automatically resize the list taking into account the specified constraints
@@ -410,7 +419,7 @@ An auxiliary combo list for the casper-epaper editor
        * @param min_width minimum width of list box
        * @param max_width maximum width of the box
        */
-      autoSize: function (min_width, max_width) {
+      autoSize (min_width, max_width) {
         var i, len, current_font, width, height, plen, ctx;
         var fm;
 
@@ -445,7 +454,7 @@ An auxiliary combo list for the casper-epaper editor
         this.$.dialog.style.width = width + 'px';
         this.$.list.style.width = width + 'px';
         console.log('~~~~ auto sized '+width);
-      },
+      }
 
       /**
        * Sets the basic the combo item list
@@ -457,7 +466,7 @@ An auxiliary combo list for the casper-epaper editor
        * @param json json string with the data model to associate with the combo it. If this parameter is
        *               undefined the model is retrieved from the _modelCache
        */
-      setModelFromJson: function (combo_id, json) {
+      setModelFromJson (combo_id, json) {
         if ( combo_id === undefined ) {
           this.items = JSON.parse(json);
         } else {
@@ -474,9 +483,9 @@ An auxiliary combo list for the casper-epaper editor
             this.items = JSON.parse(json);
           }
         }
-      },
+      }
 
-      setModelFromJsonApi: function (jsonApi) {
+      setModelFromJsonApi (jsonApi) {
         var len, ja_items, items;
 
         ja_items = JSON.parse(jsonApi)['data'];
@@ -491,27 +500,27 @@ An auxiliary combo list for the casper-epaper editor
         this.items = items;
         this._selectedId = this._initialId;
         this._filterModel(this._query);
-      },
+      }
 
       /**
        * Sets the name of the data model field that contains the item description
        *
        * @param a_display_fields array of fields names
        */
-      setDisplayFields: function (a_display_fields) {
+      setDisplayFields (a_display_fields) {
         this.displayFields = a_display_fields;
-      },
+      }
 
-      setNotifyIdOnly: function (a_option) {
+      setNotifyIdOnly (a_option) {
         this._notifiyIdOnly = a_option;
-      },
+      }
 
       /**
        * Find the model index with specified id and makes it the current selection
        *
        * @param a_id The id of row that should become selected
        */
-      selectById: function (a_id) {
+      selectById (a_id) {
         var idx;
 
         this._initialId = a_id;
@@ -525,12 +534,12 @@ An auxiliary combo list for the casper-epaper editor
           this.selectedItem = this.items[idx];
           this._selectedId = this.items[idx]['_id'];
         }
-      },
+      }
 
       /**
        * Throw away the data and display models
        */
-      clearModel: function () {
+      clearModel () {
         this.selectedItem   = undefined;
         this.items          = [];
         this._filteredItems = [];
@@ -538,9 +547,9 @@ An auxiliary combo list for the casper-epaper editor
         this._notifiyIdOnly = false;
         this._selectedId    = undefined;
         this._initialId     = undefined;
-      },
+      }
 
-      moveSelection: function (a_direction) {
+      moveSelection (a_direction) {
         if ( this._selectedId ) {
           var idx = this._findFilteredIndexById(this._selectedId);
           if ( idx !== undefined ) {
@@ -558,9 +567,9 @@ An auxiliary combo list for the casper-epaper editor
             }
           }
         }
-      },
+      }
 
-      _dialogOpened: function () {
+      _dialogOpened () {
         //this._query = '';
         this._onQueryChanged();
         this.async(function () {
@@ -568,9 +577,9 @@ An auxiliary combo list for the casper-epaper editor
           this.moveSelection('keep');
         }.bind(this), 200);
         this.$.input.focus();
-      },
+      }
 
-      _onSelectionChanged: function () {
+      _onSelectionChanged () {
         if ( this.selectedItem ) {
           var matchStart, matchEnd, filter, flen, i, f, displayValue;
 
@@ -606,22 +615,22 @@ An auxiliary combo list for the casper-epaper editor
             matchEnd:     matchEnd
           });
         }
-      },
+      }
 
-      _dialogClosed: function (a_event) {
+      _dialogClosed (a_event) {
         this.fire('on-combo-list-closed', {
             selectedId:   this.selectedItem ?  this.selectedItem._id : undefined,
             displayValue: this.selectedItem ? (this._notifiyIdOnly ? this.selectedItem._id : this.selectedItem._displayValue) : '',
             previousId:   this._initialId,
             closingKey:   this._closingKey
           });
-      },
+      }
 
-      _inputTap: function (a_event) {
+      _inputTap (a_event) {
         a_event.stopPropagation();
-      },
+      }
 
-      _keyDownHandler: function (a_event) {
+      _keyDownHandler (a_event) {
         switch (a_event.keyCode) {
           case  9: // tab
             this._closingKey = a_event.shiftKey === true ? 'shift+tab' : 'tab';
@@ -648,20 +657,20 @@ An auxiliary combo list for the casper-epaper editor
             a_event.stopPropagation();
             return;
         }
-      },
+      }
 
-      _clearQuery: function () {
+      _clearQuery () {
         this._query = undefined;
         this._filterModel(this._query);
         this.$.clear.style.opacity = this._query && this._query.length ? 1 : 0.0;
         this.moveSelection('keep');
         this.$.input.focus();
-      },
+      }
 
       /**
        * Listens to changes in the filter query to apply/update the model filtering
        */
-      _onQueryChanged: function () {
+      _onQueryChanged () {
         if ( this._query === undefined ) {
           return;
         }
@@ -690,16 +699,16 @@ An auxiliary combo list for the casper-epaper editor
           }
         }
         this.$.dialog.notifyResize();
-      },
+      }
 
-      _selectItem: function (a_event) {
+      _selectItem (a_event) {
         var model = this.$.list.modelForElement(a_event.target);
         if (model) {
           this.$.list.selectItem(model[this.$.list.as]);
         }
         this.$.dialog.close();
         a_event.stopPropagation();
-      },
+      }
 
       /**
        * Apply filter string to the list model
@@ -708,7 +717,7 @@ An auxiliary combo list for the casper-epaper editor
        *
        * @param a_filter filter to apply
        */
-      _filterModel: function (a_query) {
+      _filterModel (a_query) {
         var field, model_len, fields_len, visible_rows, filter, fitem, item_visible, ms;
         var match, stack, m, top, text, html;
 
@@ -799,7 +808,7 @@ An auxiliary combo list for the casper-epaper editor
         if ( visible_rows.length ) {
           this._filteredItems = visible_rows;
         }
-      },
+      }
 
       /**
        * Find the model index with specified id
@@ -807,7 +816,7 @@ An auxiliary combo list for the casper-epaper editor
        * @param a_id The id of the model item to look for
        * @return the index of the model item with matching index, undefined if not not found
        */
-      _findIndexById: function (a_id) {
+      _findIndexById (a_id) {
         var index = undefined;
 
         // ... walk the data model to pick the element with matching id ...
@@ -821,9 +830,9 @@ An auxiliary combo list for the casper-epaper editor
           }
         }
         return index;
-      },
+      }
 
-      _findFilteredIndexById: function (a_id) {
+      _findFilteredIndexById (a_id) {
         var index = undefined;
 
         // ... walk the data model to pick the element with matching id ...
@@ -837,9 +846,9 @@ An auxiliary combo list for the casper-epaper editor
           }
         }
         return index;
-      },
+      }
 
-      _getDisplayValue: function (a_item) {
+      _getDisplayValue (a_item) {
         var fields_len = this.displayFields.length;
         var it = [];
 
@@ -847,9 +856,9 @@ An auxiliary combo list for the casper-epaper editor
           it.push(a_item[this.displayFields[f]]);
         }
         return it.join(' - ');
-      },
+      }
 
-      _renderRow: function (a_item) {
+      _renderRow (a_item) {
         var fields_len = this.displayFields.length;
 
         if ( this._binding !== undefined && this._binding.attachment !== undefined && this._binding.attachment.html !== undefined ) {
@@ -868,7 +877,7 @@ An auxiliary combo list for the casper-epaper editor
           }
           return it.join(' - ');
         }
-      },
+      }
 
       /**
        * Returns the CSS class to apply to the list rows
@@ -876,13 +885,15 @@ An auxiliary combo list for the casper-epaper editor
        * @param selected true if the row is selected
        * @return the class
        */
-      _getItemClass: function (selected) {
+      _getItemClass (selected) {
         return selected ? 'item selected' : 'item';
-      },
+      }
 
-      _stopPropagation: function (event) {
+      _stopPropagation (event) {
         event.stopPropagation();
       }
-    });
+    }
+
+    window.customElements.define(CasperEpaperCombolist.is, CasperEpaperCombolist);
   </script>
 </dom-module>

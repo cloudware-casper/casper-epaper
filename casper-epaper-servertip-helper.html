@@ -18,43 +18,53 @@
   -
  -->
 
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 
 <!--
  `casper-epaper-servertip-helper` Helper to request server tooltip when the mouse hovers over a point
 -->
 <dom-module id="casper-epaper-servertip-helper">
   <script>
-    Polymer({
-      is: 'casper-epaper-servertip-helper',
+    class CasperEpaperServertipHelper extends Polymer.Element { // # TODO HTML element?
 
-      properties: {
-        /** Mouse move threshold, movement bellow this treshold is ignored */
-        threshold: {
-          type: Number,
-          value: 4
-        },
-        /** Time the mouse has to stay in overing inside the threshold to trigger a request */ 
-        hoveringTime: {
-          type: Number,
-          value: 500
-        },
-        /** Parent casper-epaper element that owns the this helper */
-        epaper: {
-          type: Object
-        },
-        /** Associated input box */
-        input: {
-          type: Object
-        },
-        /** true to enable hint requests */
-        enabled: {
-          type: Boolean,
-          value: false
-        }
-      },
+      static get is () {
+        return 'casper-epaper-servertip-helper';
+      }
 
-      ready: function () {
+      static get properties () {
+        return  {       
+          /** Mouse move threshold, movement bellow this treshold is ignored */
+          threshold: {
+            type: Number,
+            value: 4
+          },
+          /** Time the mouse has to stay in overing inside the threshold to trigger a request */ 
+          hoveringTime: {
+            type: Number,
+            value: 500
+          },
+          /** Parent casper-epaper element that owns the this helper */
+          epaper: {
+            type: Object
+          },
+          /** Associated input box */
+          input: {
+            type: Object
+          },
+          /** true to enable hint requests */
+          enabled: {
+            type: Boolean,
+            value: false
+          }
+        };
+      }
+
+      //ready () {
+      //  super.ready();
+      //}
+
+      connectedCallback () {
+        super.connectedCallback();
         this._last_x          = undefined;
         this._last_y          = undefined;
         this._center_x        = undefined;
@@ -64,11 +74,12 @@
         this.hoveringTime     = 500;
         this._scalePxToServer = 1.0;
         this._timer           = undefined;
-      },
+      }
 
-      detached: function () {
+      disconnectedCallback () {
+        super.disconnectedCallback();
         this._resetTimer();
-      },
+      }
 
       /**
        * Handle mouse over event
@@ -77,7 +88,7 @@
        * @param {number} y vertical coordinate of the mouse event (relative to canvas)
        * @param {number} s scale to convert screen px to server pt scale 
        */
-      onMouseMove: function (x, y, s) {
+      onMouseMove (x, y, s) {
         var mouse_over;
 
         if ( ! this.enabled ) {
@@ -103,7 +114,7 @@
         }
         this._last_x = x;
         this._last_y = y;
-      },
+      }
 
       /**
        * Requests the server side hint for the current hovering point
@@ -111,7 +122,7 @@
        * @param {number} x coordinate where the mouse is overing
        * @param {number} y coordinate where the mouse is overing
        */
-      _getHint: function (x, y) {
+      _getHint (x, y) {
         var hintCallback = function (a_epaper, a_message) {
             var x, y, w, h, l, t;
 
@@ -137,7 +148,7 @@
 
         this.epaper._callRpc('hint', 'get hint ' + (this._scalePxToServer * x).toFixed(2) + ',' + (this._scalePxToServer * y).toFixed(2) + ';', 
                               hintCallback.bind(this));
-      },
+      }
 
       /**
        * Update the reference point for mouse hovering, starts our re-starts the sampling timer
@@ -145,7 +156,7 @@
        * @param {number} x horizontal coordinate of the new reference center
        * @param {number} y vertical coordinate of the new reference center
        */
-      _updateCenter: function (x, y) {
+      _updateCenter (x, y) {
         this._center_x = x;
         this._center_y = y;
 
@@ -153,24 +164,24 @@
           this.cancelAsync(this._timer);
         }
         this._timer = this.async(this._onOverHandler.bind(this), this.hoveringTime);
-      },
+      }
 
       /**
        * Resets the mouse over control timer
        */
-      _resetTimer: function () {
+      _resetTimer () {
         if ( this._timer !== undefined ) {
           this.cancelAsync(this._timer);
           this._timer = undefined;
         }
-      },
+      }
 
       /**
        * Checks if the mouse has stayed inside the threshold
        *
        * If the mouse has stayed within the threshold get the hint, if not just update the reference point.
        */
-      _onOverHandler: function () {
+      _onOverHandler () {
         if ( Math.abs(this._center_x - this._last_x) <= this.threshold &&
              Math.abs(this._center_y - this._last_y) <= this.threshold ) {
           this._getHint(this._center_x, this._center_y);
@@ -180,6 +191,8 @@
         }
       }
 
-    });
+    }
+
+    window.customElements.define(CasperEpaperServertipHelper.is, CasperEpaperServertipHelper);
   </script>
 </dom-module>

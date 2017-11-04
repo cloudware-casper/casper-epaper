@@ -18,7 +18,7 @@
   -
  -->
 
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 <!--
 `casper-epaper-tooltip` customised input component that overlays the rendering canvas
 -->
@@ -66,52 +66,60 @@
     <div id="text"></div>
   </template>
   <script>
-    Polymer({
-      is: 'casper-epaper-tooltip',
+    class CasperEpaperTooltip extends Polymer.Element {
 
-      properties: {
-        radius: {
-          type: Number,
-          value: 5
-        },
-        tipHeight: {
-          type: Number,
-          value: 5
-        },
-        tipBase: {
-          type: Number,
-          value: 10
-        },
-        tipLocation: {
-          type: Number,
-          value: 0.5
-        },
-        positionTarget: {
-          type: Element
-        },
-        fitInto: {
-          type: Element
-        },
-        _showing: {
-          type: Boolean,
-          value: false
-        }
-      },
+      static get is () {
+        return 'casper-epaper-tooltip';
+      }
 
-      ready: function () {
+      static get properties () {
+        return {
+          radius: {
+            type: Number,
+            value: 5
+          },
+          tipHeight: {
+            type: Number,
+            value: 5
+          },
+          tipBase: {
+            type: Number,
+            value: 10
+          },
+          tipLocation: {
+            type: Number,
+            value: 0.5
+          },
+          positionTarget: {
+            type: Element
+          },
+          fitInto: {
+            type: Element
+          },
+          _showing: {
+            type: Boolean,
+            value: false
+          }
+        };
+      }
+
+      ready () {
+        super.ready();
         this._ctx = this.$.canvas.getContext('2d');
         this._tipEdge = 'N';
         this._setupPixelRatio();
-      },
+      }
 
-      attached: function () {
+      connectedCallback () {
+        super.connectedCallback();
         this.listen(this, 'tap', 'hide');
         this._showing = true;
-      },
+      }
 
-      detached: function () {
+      disconnectedCallback () {
+        super.disconnectedCallback();
         this.unlisten(this, 'tap', 'hide');
-      },
+      }
 
       /**
        * Define the tooltip location
@@ -119,18 +127,18 @@
        * @param left horizontal position
        * @param top vertical position
        */
-      setLocation: function (left, top) {
+      setLocation (left, top) {
         this.style.left = left + 'px';
         this.style.top = top + 'px';
         this.updateStyles();
-      },
+      }
 
-      setVisible: function (visible) {
+      setVisible (visible) {
         this.toggleClass('hidden' , !visible, this.$.canvas);
         this.toggleClass('hidden' , !visible, this.$.text);
         this.toggleClass('visible',  visible, this.$.canvas);
         this.toggleClass('visible',  visible, this.$.text);
-      },
+      }
 
       /**
        * Layout tool tip and set text
@@ -141,7 +149,7 @@
        *
        * @param content The tooltip message to show
        */
-      show: function (content, positionTarget) {
+      show (content, positionTarget) {
         var tooltipWidth, tooltipArrowX, tooltipLeft, arrowLoc, fitInto;
 
         fitInto = this.fitInto.getBoundingClientRect();
@@ -182,18 +190,18 @@
         this.style.left = tooltipLeft - fitInto.left + 'px';
         this.style.top  = positionTarget.bottom - fitInto.top  + 'px';
         this._updateBalloon();
-      },
+      }
 
-      hide: function() {
+      hide () {
         // If the tooltip is already hidden, there's nothing to do.
         if (!this._showing) {
           return;
         }
         this._showing = false;
         this.setVisible(false);
-      },
+      }
 
-      _updateBalloon: function () {
+      _updateBalloon () {
         var width, height, bb;
 
         bb = this.$.text.getBoundingClientRect();
@@ -214,12 +222,12 @@
         this.$.canvas.style.width  = width + 'px';
         this.$.canvas.style.height = height + 'px';
         this._paintBalloon(width - 1, height -1);
-      },
+      }
 
       /**
        * @brief Determine the device pixel ratio: 1 on classical displays 2 on retina/UHD displays
        */
-      _setupPixelRatio: function () {
+      _setupPixelRatio () {
         var devicePixelRatio  = window.devicePixelRatio || 1;
         if (devicePixelRatio > 1.6) {
           devicePixelRatio = 2;
@@ -232,7 +240,7 @@
                                 this._ctx.oBackingStorePixelRatio ||
                                 this._ctx.backingStorePixelRatio || 1;
         this._ratio = devicePixelRatio / backingStoreRatio;
-      },
+      }
 
       /**
        * @brief Prepares a rounded rect path, does not paint or stroke it
@@ -243,15 +251,15 @@
        * @param h height of the round rectangle
        * @param r corner radius
        */
-      _makeRoundRectPath: function (x, y, w, h, r) {
+      _makeRoundRectPath (x, y, w, h, r) {
         this._ctx.moveTo( x + r, y );
         this._ctx.arcTo(  x + w, y    , x + w    , y + r    , r);
         this._ctx.arcTo(  x + w, y + h, x + w - r, y + h    , r);
         this._ctx.arcTo(  x    , y + h, x        , y + h - r, r);
         this._ctx.arcTo(  x    , y    , x + r    , y        , r);
-      },
+      }
 
-      _paintBalloon: function (width, height) {
+      _paintBalloon (width, height) {
         var tipLocation, tipHeight, tipBase, radius;
 
         this._ctx.fillStyle = '#000';
@@ -301,7 +309,8 @@
         this._ctx.closePath();
         this._ctx.fill();
       }
-
-    });
+    }
+    
+    window.customElements.define(CasperEpaperTooltip.is, CasperEpaperTooltip);
   </script>
 </dom-module>

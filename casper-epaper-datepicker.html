@@ -18,7 +18,8 @@
   -
  -->
 
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../vaadin-material-theme/vaadin-date-picker.html">
 <link rel="import" href="../vaadin-date-picker/vaadin-date-picker-light.html">
 
 <!--
@@ -33,39 +34,53 @@
       return this.inputBox;
     };
 
-    Polymer({
-      is: 'casper-epaper-datepicker',
+    class CasperEpaperDatepicker {
 
-      properties: {
-        inputBox: {
-          type: Object
-        }
-      },
+      static get is () {
+        return 'casper-epaper-datepicker';
+      }
+
+      static get properties () {
+        return {
+          inputBox: {
+            type: Object
+          }
+        };
+      }
+
+      /* @TODO port to 2.0
 
       listeners: {
         'keypress': '_onKeypress',
         'keydown': '_onKeyDown'
       },
 
-      ready: function () {
+      */
+
+      ready () {
+        super.ready();
         this.$.picker._input = inputBridge.bind(this);
         this.$.picker.$.dropdown.noOverlap = true;
-      },
+      }
 
-      attached: function () {
+      connectedCallback () {
+        super.connectedCallback();
         this._closingKey = undefined;
+        //  @TODO port to 2.0
         this.listen(this.$.picker.$.dropdown, 'iron-overlay-opened', '_onOverlayOpened');
         this.listen(this.$.picker.$.dropdown, 'iron-overlay-closed', '_onOverlayClosed');
-      },
+      }
 
-      detached: function () {
+      disconnectedCallback () {
+        super.disconnectedCallback();
+        //  @TODO port to 2.0
         this.unlisten(this.$.picker.$.dropdown, 'iron-overlay-opened', '_onOverlayOpened');
         this.unlisten(this.$.picker.$.dropdown, 'iron-overlay-closed', '_onOverlayClosed');
-      },
+      }
 
-      open: function () {
+      open () {
         this.$.picker.open();
-      },
+      }
 
       /**
        * Show or hide the widget
@@ -73,16 +88,16 @@
        * @param a_visible true to make visible, false to hide this widget
        * @return "das" widget
        */
-      setVisible: function (a_visible) {
+      setVisible (a_visible) {
         this._closingKey = undefined;
         if (a_visible) {
           this.$.picker.open();
         } else {
           this.$.picker.close();
         }
-      },
+      }
 
-      setLocale: function (isoCountryCode) {
+      setLocale (isoCountryCode) {
         moment.locale(isoCountryCode || 'pt');
         this.$.picker.i18n = {
             monthNames: moment.months(),
@@ -98,34 +113,34 @@
               return monthName + ' ' + fullYear;
             }
         }
-      },
+      }
 
-      setValue: function (date) {
+      setValue (date) {
         this.$.picker.value = date;
-      },
+      }
 
       /**
        * @brief Returns true if the widget is visible
        *
        * @return true if visible, false if the widget is hidden
        */
-      isVisible: function () {
+      isVisible () {
         return this.$.picker.opened;
-      },
+      }
 
-      _onOverlayOpened: function (event) {
+      _onOverlayOpened (event) {
         this._previousDate = this.$.picker.value;
         this.$.picker.$.overlay.style.marginTop = '-6px';
         this.$.picker.$.overlay.style.borderTop = 'solid 6px #04abc1';
-      },
+      }
 
-      _onOverlayClosed: function (event) {
+      _onOverlayClosed (event) {
         this.fire('date-overlay-closed', {
           closingKey:   this._closingKey,
           previousDate: this._previousDate,
           currentDate:  this.$.picker.value
         });
-      },
+      }
 
       /**
        * Intercepts keys to capture the closing key and to prevent events
@@ -133,7 +148,7 @@
        *
        * @param event Keyboard event
        */
-      _onKeyDown: function (event) {
+      _onKeyDown (event) {
         switch (event.keyCode) {
           case  9: // tab
             if ( this.$.picker.$.overlay.focusedDate ) {
@@ -158,17 +173,19 @@
             break;
         }
         event.stopPropagation();
-      },
+      }
 
       /**
        * Intercepts to prevent keys from piercing up to the epaper behind
        *
        * @param event Keyboard event
        */
-      _onKeypress: function (event) {
+      _onKeypress (event) {
         event.stopPropagation();
       }
 
-    });
+    }
+
+    window.customElements.define(CasperEpaperDatepicker.is, CasperEpaperDatepicker);
   </script>
 </dom-module>

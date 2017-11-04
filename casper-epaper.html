@@ -18,15 +18,15 @@
   -
  -->
 
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../paper-card/paper-card.html">
+<link rel="import" href="../casper-common-ui/casper-iconset.html">
+<link rel="import" href="../casper-common-ui/casper-i18n-behavior.html">
 <link rel="import" href="../casper-epaper/casper-epaper-imports.html">
-<link rel="import" href="../casper-epaper/casper-epaper-iconset.html">
 <link rel="import" href="../casper-epaper/casper-epaper-tooltip.html">
 <link rel="import" href="../casper-epaper/casper-epaper-input.html">
 <link rel="import" href="../casper-epaper/casper-epaper-servertip-helper.html">
-<link rel="import" href="../casper-common-ui/casper-i18n-behavior.html">
 
 <!--
   `<awesome-sauce>` injects a healthy dose of awesome into your page.
@@ -87,58 +87,65 @@
 
   <script>
 
-    EPaperSocket_Initialize(window);
+    /* @TODO delete EPaperSocket_Initialize(window); */
 
-    Polymer({
-      is: 'casper-epaper',
-      properties: {
-        /** component width in px */
-        width: {
-          type: Number,
-          value: 595
-        },
-        /** component height in px */
-        height: {
-          type: Number,
-          value: 842
-        },
-        /** zoom factor when zoom is 1 one pt in report is one px in the screen */
-        zoom: {
-          type: Number,
-          value: 1
-        },
-        /** object that specifies the document being displayed/edited */
-        document: {
-          type: Object,
-          observer: '_document_changed'
-        },
-        /** websocket URL */
-        url: {
-          type: String,
-          value: undefined
-        },
-        /** websocket port number, defaults to current page port */
-        port: {
-          type: String,
-          value: undefined
-        },
-        /** set when the component is inside an iframe */
-        iframe: {
-          type: Boolean,
-          value: false
-        },
-        /** id of the containing element that can be scrolled */
-        scroller: {
-          type: String,
-          value: undefined
-        },
-        /** server session */
-        session: {
-          type: String,
-          value: undefined
-        }
-      },
+    class CasperEpaper extends Polymer.Element {
 
+      static get is () {
+        return 'casper-epaper';
+      }
+
+      static get properties () {
+        return {
+          /** component width in px */
+          width: {
+            type: Number,
+            value: 595
+          },
+          /** component height in px */
+          height: {
+            type: Number,
+            value: 842
+          },
+          /** zoom factor when zoom is 1 one pt in report is one px in the screen */
+          zoom: {
+            type: Number,
+            value: 1
+          },
+          /** object that specifies the document being displayed/edited */
+          document: {
+            type: Object,
+            observer: '_document_changed'
+          },
+          /** websocket URL */
+          url: {
+            type: String,
+            value: undefined
+          },
+          /** websocket port number, defaults to current page port */
+          port: {
+            type: String,
+            value: undefined
+          },
+          /** set when the component is inside an iframe */
+          iframe: {
+            type: Boolean,
+            value: false
+          },
+          /** id of the containing element that can be scrolled */
+          scroller: {
+            type: String,
+            value: undefined
+          },
+          /** server session */
+          session: {
+            type: String,
+            value: undefined
+          }
+        };
+      }
+
+      /* TODO port to 2.0 
       behaviors: [
         Polymer.CasperI18nBehavior
       ],
@@ -146,6 +153,8 @@
       /*
        * Constants
        */
+      /* TODO port to 2.0 
+
       _BTN_SIZE:        24,  // Size is in pixels not pt
       _KAPPA:           .5522848,
       _BOLD_MASK:       0x01,
@@ -155,9 +164,10 @@
       _BOLD_INDEX:      0,
       _ITALIC_INDEX:    1,
       _SIZE_INDEX:      2,
-      _FONT_NAME_INDEX: 4,
+      _FONT_NAME_INDEX: 4, */
 
-      ready: function () {
+      ready () {
+        super.ready ();
         this._calculateAttributeDefaults();
 
         this._socket            = new EPaperSocket(this, this.url, this.port, this.uri);
@@ -232,24 +242,28 @@
           y += 35;
         }
         this._ctx.restore();
-      },
+      }
 
-      attached: function () {
+      connectedCallback () {
+        super.connectedCallback();
+        // @TODO port to 2.0
         this.listen(this.$.canvas, 'mousemove', '_moveHandler');
         this.listen(this.$.canvas, 'mousedown', '_mouseDownHandler');
         this.listen(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
         this._deactivateLineContextMenu();
-      },
+      }
 
-      detached: function () {
+      disconnectedCallback () {
+        super.disconnectedCallback();
+        // @TODO port to 2.0
         this.unlisten(this.$.canvas, 'mousemove', '_moveHandler');
         this.unlisten(this.$.canvas, 'mousedown', '_mouseDownHandler');
         this.unlisten(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
-      },
+      }
 
-      isPrintableDocument: function () {
+      isPrintableDocument () {
         return this._document_id === undefined || this._document === undefined || this._document.chapters === undefined || this._document.loading
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -262,10 +276,10 @@
        *
        * @param {Object} documentModel an object that specifies the layout and data of the document
        */
-      open: function (documentModel) {
+      open (documentModel) {
         this._prepareOpenCommand(documentModel);
         this._openChapter();
-      },
+      }
 
       /**
        * Open specified chapter, page can also be specified
@@ -273,7 +287,7 @@
        * @param {number} chapterIndex zero page index of the chapter in the document model
        * @param {number} pageNumber page to open, 1 for 1st page
        */
-      gotoChapter: function (chapterIndex, pageNumber) {
+      gotoChapter (chapterIndex, pageNumber) {
         if ( this._document && this._document.chapters && this._document.chapters.length >= 1 ) {
           this._chapterIndex = chapterIndex;
           this._chapter      = this._document.chapters[chapterIndex];
@@ -281,7 +295,7 @@
         } else {
           // warning
         }
-      },
+      }
 
       /**
        * Open document and highlight field or parameter on the specified chapter
@@ -291,11 +305,11 @@
        * @param {string} fieldName name field or parameter to highlight
        * @param {string} rowIndex undefined to highlight a parameter or the rowIndex to highligth a field
        */
-      openAndGotoParamOrField: function (documentModel, chapterReport, fieldName, rowIndex) {
+      openAndGotoParamOrField (documentModel, chapterReport, fieldName, rowIndex) {
         this._prepareOpenCommand(documentModel);
         this._chapterIndex = undefined;
         this.gotoParamOrField(chapterReport, fieldName, rowIndex);
-      },
+      }
 
       /**
        * Highlight field or parameter on the specified chapter
@@ -304,7 +318,7 @@
        * @param {string} fieldName name field or parameter to highlight
        * @param {string} rowIndex undefined to highlight a parameter or the rowIndex to highligth a field
        */
-      gotoParamOrField: function (chapterReport, fieldName, rowIndex) {
+      gotoParamOrField (chapterReport, fieldName, rowIndex) {
         var chapterIndex = undefined;
         var highlight_after_load = function() {
             var cmd;
@@ -352,9 +366,9 @@
             highlight_after_load();
           }
         }
-      },
+      }
 
-      previousChapter: function () {
+      previousChapter () {
         if ( this._document && this._document.chapters && this._document.chapters.length >= 1 ) {
           if (this._chapterIndex >= 1 ) {
             this._chapterIndex -= 1;
@@ -363,9 +377,9 @@
           }
         }
         return false;
-      },
+      }
 
-      nextChapter: function () {
+      nextChapter () {
         if ( this._document && this._document.chapters && this._document.chapters.length >= 1 ) {
           if ( this._chapterIndex < (this._document.chapters.length - 1) ) {
             this._chapterIndex += 1;
@@ -374,12 +388,12 @@
           }
         }
         return false;
-      },
+      }
 
       // NOTE @TODO will be delete when we move to session based man grade authentication
-      jsonApiConfig: function (configuration) {
+      jsonApiConfig (configuration) {
         this._jsonApiConfig = configuration;
-      },
+      }
 
       /**
        * Set the zoom factor (document pt to screen px ratio)
@@ -387,7 +401,7 @@
        * @param {number}  zoom factor must be a number
        * @param {boolean} forced truish to force the zoom update
        */
-      setZoom: function (zoom, forced) {
+      setZoom (zoom, forced) {
         var w; // Canvas width in px
         var h; // Canvas height in px
 
@@ -398,14 +412,14 @@
           h = Math.round((this._page_height || this.height) * this.zoom);
           this._setSize(w, h);
         }
-      },
+      }
 
       /**
        * Goto to the specified page. Requests page change or if needed loads the required chapter
        *
        * @param {number} pageNumber the page to render
        */
-      gotoPage: function (pageNumber) {
+      gotoPage (pageNumber) {
 
         if ( this._document && this._document.chapters && this._document.chapters.length >= 1 ) {
           var currentPage = 1;
@@ -429,29 +443,29 @@
             currentPage += this._document.chapters[i].pageCount;
           }
         }
-      },
+      }
 
       /**
        * @brief Retrieve the number of pages in the document
        *
        * @return page count
        */
-      getPageCount: function () {
+      getPageCount () {
         return this._totalPageCount;
-      },
+      }
 
       /**
        * Clears the page and re-starts the connection to the server
        */
-      reconnect: function () {
+      reconnect () {
         this._clear(true);
         this._socket.connect();
-      },
+      }
 
       /**
        * Re-opens the last document that was open
        */
-      reOpen: function () {
+      reOpen () {
         if ( this._document !== undefined ) {
           var cloned_command = JSON.parse(JSON.stringify(this._document));
           this._clear();
@@ -459,9 +473,9 @@
         } else {
           this._clear();
         }
-      },
+      }
 
-      closeDocument: function (a_success_handler) {
+      closeDocument (a_success_handler) {
         this._clear();
         this._hideWidgets(true);
         this._resetCommandData();
@@ -482,9 +496,9 @@
             }
           }
         );
-      },
+      }
 
-      getPrintJob: function (print) {
+      getPrintJob (print) {
         name = this.i18n.apply(this, this._document.filename_template);
         title = name
 
@@ -524,9 +538,9 @@
           job.documents.push(chapter);
         }
         return job;
-      },
+      }
 
-      getBatchPrintJob: function (print, documents) {
+      getBatchPrintJob (print, documents) {
         documents = documents || []
 
         first_document = documents[0]
@@ -585,32 +599,32 @@
         }
 
         return job;
-      },
+      }
 
       // This more a Refresh??
-      reload_document: function (a_success_handler) {
+      reload_document (a_success_handler) {
         this._callRpc('reload', 'document reload;', function(a_epaper, a_message) {
             if ( undefined !== a_success_handler ) {
               a_success_handler(a_message.substring('S:ok:reload:'.length));
             }
           }
         );
-      },
+      }
 
-      document_focus_row: function (a_index, a_success_handler) {
+      document_focus_row (a_index, a_success_handler) {
         this._callRpc('focused row', 'document set focused row ' + a_index + ';', function(a_epaper, a_message) {
             if ( undefined !== a_success_handler ) {
               a_success_handler(a_message.substring('S:ok:focused row:'.length));
             }
           }
         );
-      },
+      }
 
-      _document_changed: function (a_document) {
+      _document_changed (a_document) {
         if (this._socket === undefined || a_document == null) return; // MARTELADA
         console.log('And then document wos set' + document);
         this.open(a_document);
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -618,7 +632,7 @@
       //                                                                                       //
       //***************************************************************************************//
 
-      _validate_response: function (a_expected_response, a_response) {
+      _validate_response (a_expected_response, a_response) {
         var expected_start;
 
         expected_start = 'S:ok:' + a_expected_response;
@@ -630,14 +644,14 @@
           return a_response.substring(expected_start.length + 1);
         }
         return undefined;
-      },
+      }
 
       /**
        * Sanitizes the document object model, auto selects the first chapter
        *
        * @param {Object} documentModel the document model
        */
-      _prepareOpenCommand: function (documentModel) {
+      _prepareOpenCommand (documentModel) {
         this._document       = JSON.parse(JSON.stringify(documentModel));
         this._chapterCount   = this._document.chapters.length;
         this._totalPageCount = 0;
@@ -651,14 +665,14 @@
         this._chapterIndex = 0;
         this._chapter      = this._document.chapters[0];
         this._edition      = false;
-      },
+      }
 
       /**
        * Opens the currently selected chapter
        *
        * @param {number} pageNumber page starts at 1
        */
-      _openChapter: function (pageNumber, postOpenFunction) {
+      _openChapter (pageNumber, postOpenFunction) {
         // Promise to open the report layout in case it not loaded yet
         var open_document = function () {
           return new Promise(function (a_resolve, a_reject) {
@@ -794,20 +808,20 @@
             alert("Paper error " + a_error);
             this._clear();
           }.bind(this));
-      },
+      }
 
       /**
        * Hides all canvas overlays
        */
-      _hideWidgets: function (hideInputButtons) {
+      _hideWidgets (hideInputButtons) {
         this._deactivateLineContextMenu();
         this.$.input.hideOverlays(hideInputButtons);
-      },
+      }
 
       /**
        * @brief Clear the local document model
        */
-      _clear: function (keepLastCommand) {
+      _clear (keepLastCommand) {
         this._hideWidgets();
         this._bands = undefined;
         this._images = {};
@@ -815,7 +829,7 @@
         this._resetCommandData(keepLastCommand);
         this._documentScale = undefined;
         this._clearPage();
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -826,7 +840,7 @@
       /**
        * @brief Assign defaults to undefined component attributes
        */
-      _calculateAttributeDefaults: function () {
+      _calculateAttributeDefaults () {
         if ( this.url === undefined ) {
           if ( window.location.protocol === 'https:' ) {
             this.url = 'wss://' + window.location.hostname;
@@ -836,7 +850,7 @@
         }
         this.port = this.port || window.location.port;
         this.uri  = this.uri  || 'epaper';
-      },
+      }
 
       /**
        * Change the size of the epaper canvas.
@@ -845,7 +859,7 @@
        * @param {number} height canvas height in px
        * @param {boolean} forced when true forces a size change
        */
-      _setSize: function (width, height, forced) {
+      _setSize (width, height, forced) {
         if ( width !== this._canvas_width || height !== this._canvas_height || forced ) {
           if (forced) {
             this._canvas_height = 100;
@@ -861,12 +875,12 @@
             this._documentScale = this._sx;
           }
         }
-      },
+      }
 
       /**
        * @brief Determine the device pixel ratio: 1 on classical displays 2 on retina/UHD displays
        */
-      _setupPixelRatio: function () {
+      _setupPixelRatio () {
         var devicePixelRatio  = window.devicePixelRatio || 1;
         if (devicePixelRatio > 1.6) {
           devicePixelRatio = 2;
@@ -879,14 +893,14 @@
                                 this._ctx.oBackingStorePixelRatio ||
                                 this._ctx.backingStorePixelRatio || 1;
         this._ratio = devicePixelRatio / backingStoreRatio;
-      },
+      }
 
       /**
        * @brief Initialize the context with the same defaults used by the server
        *
        * After server and client align the render contexts the server uses diferential updates
        */
-      _resetRenderState: function () {
+      _resetRenderState () {
         this._fill_color      = '#FFFFFF';
         this._text_color      = '#000000';
         this._font_spec       = ['', '', 10, 'px ', 'DejaVu Sans Condensed'];
@@ -894,12 +908,12 @@
         this._ctx.strokeStyle = '#000000';
         this._ctx.lineWidth   = 1.0;
         this._ctx.font        = this._font_spec.join('');
-      },
+      }
 
       /**
        * Initialize the  centralize here all that is needeed to init/clear the relation with server
        */
-      _resetCommandData: function (keepLastCommand) {
+      _resetCommandData (keepLastCommand) {
         if ( ! keepLastCommand ) {
           this._chapter = undefined;
         }
@@ -914,7 +928,7 @@
         this._loading      = false;
         this._openFocus    = undefined;
         this._nextPage     = undefined;
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -925,7 +939,7 @@
       /**
        * @brief Creates the handler that listens to mouse movements
        */
-      _moveHandler: function (a_event) {
+      _moveHandler (a_event) {
 
         if ( this.$.input.overlayVisible ) {
           return;
@@ -941,18 +955,18 @@
         if ( this._edition ) {
           this._update_context_menu(a_event.offsetY * this._ratio);
         }
-      },
+      }
 
-      _mouseDownHandler: function (a_event) {
+      _mouseDownHandler (a_event) {
         /* empty */
-      },
+      }
 
-      _mouseUpHandler: function (a_event) {
+      _mouseUpHandler (a_event) {
         this._sendCommand("set click " + (event.offsetX * this._scalePxToServer).toFixed(2) + ', ' + (event.offsetY * this._scalePxToServer).toFixed(2) + ';');
         if ( this._edition ) {
           this.$.input.grabFocus();
         }
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -960,7 +974,7 @@
       //                                                                                       //
       //***************************************************************************************//
 
-      _paintGrid: function (a_major, a_minor) {
+      _paintGrid (a_major, a_minor) {
         var width  = this._canvas.width;
         var height = this._canvas.height;
         var x      = 0;
@@ -1000,9 +1014,9 @@
         }
         this._ctx.stroke();
         this._ctx.strokeStyle = "#000000";
-      },
+      }
 
-      _getDouble: function() {
+      _getDouble() {
 
         var fractional    = 0.0;
         var whole         = 0.0;
@@ -1053,18 +1067,18 @@
               return NaN;
           }
         }
-      },
+      }
 
-      _onPaintMessage: function (a_message) {
+      _onPaintMessage (a_message) {
         this._r_idx   = 1;
         this._message = a_message;
         this._paintBand();
-      },
+      }
 
       /**
        * Paints blank page
        */
-      _clearPage: function () {
+      _clearPage () {
         var saved_fill = this._ctx.fillStyle;
 
         this._ctx.fillStyle = this._background_color;
@@ -1073,7 +1087,7 @@
           this._paintGrid(this._grid_major, this._grid_minor);
         }
         this._ctx.fillStyle = saved_fill;
-      },
+      }
 
       /**
        * Repaints the whole page using the saved bands array
@@ -1083,7 +1097,7 @@
        *
        * @note This function must keep the object context and canvas context unmodified
        */
-      _repaintPage: function () {
+      _repaintPage () {
         var band;
 
         this._reset_redraw_timer();
@@ -1115,23 +1129,23 @@
         this._restorePaintContext();
 
         //console.timeEnd("repaint_page");
-      },
+      }
 
-      _savePaintContext: function () {
+      _savePaintContext () {
         this._saved_idx         = this._r_idx;
         this._saved_draw_string = this._message;
-      },
+      }
 
-      _restorePaintContext: function () {
+      _restorePaintContext () {
         this._r_idx           = this._saved_idx;
         this._message         = this._saved_draw_string;
-      },
+      }
 
-      _paintString: function (a_draw_string) {
+      _paintString (a_draw_string) {
         this._message = a_draw_string;
         this._r_idx   = 0;
         this._paintBand();
-      },
+      }
 
       /**
        * @brief the main drawing function paints a whole band
@@ -1139,7 +1153,7 @@
        * The paint instructions are in the _message string, this string is walked using _r_idx index handling each
        * command until the end of the message
        */
-      _paintBand: function () {
+      _paintBand () {
 
         var do_paint   = true;
         var option     = '';
@@ -2022,14 +2036,14 @@
             console.log("command is not terminated ...");
           }
         }
-      },
+      }
 
       /**
        * Adjust the canvas dimension taking into account the pixel ratio
        *
        * Also calculates the scale the server should
        */
-      _setupScale: function () {
+      _setupScale () {
         this._canvas.width  = this._canvas_width  * this._ratio;
         this._canvas.height = this._canvas_height * this._ratio;
         this._canvas.style.width  = this._canvas_width  + 'px';
@@ -2037,9 +2051,9 @@
         this._sx = parseFloat((this._canvas.width  / this._page_width).toFixed(2));
         this._scalePxToServer = this._page_width * this._ratio / this._canvas.width;
         this._clearPage();
-      },
+      }
 
-      _binaryFindBandById: function (a_id) {
+      _binaryFindBandById (a_id) {
 
         if ( this._bands !== undefined && this._bands.length > 0 ) {
           var mid;
@@ -2061,12 +2075,12 @@
           }
         }
         return -1; // Not found!
-      },
+      }
 
       /**
        * @start the redraw timer will redraw the page after a timeout
        */
-      _restart_redraw_timer: function (a_time_in_ms) {
+      _restart_redraw_timer (a_time_in_ms) {
         var timeout = a_time_in_ms !== undefined ? a_time_in_ms : 300;
 
         if ( window[this._redraw_timer_key] !== undefined ) {
@@ -2074,18 +2088,18 @@
           window[this._redraw_timer_key] = undefined;
         }
         window[this._redraw_timer_key] = setInterval(this._create_redraw_timer_handler(this), timeout);
-      },
+      }
 
       /**
        * @brief Resets the deferred repaint timer
        */
-      _reset_redraw_timer: function () {
+      _reset_redraw_timer () {
 
         if ( window[this._redraw_timer_key] !== undefined ) {
           window.clearTimeout(window[this._redraw_timer_key]);
           window[this._redraw_timer_key] = undefined;
         }
-      },
+      }
 
       /**
        * @brief Create the handler for the mouse over time-out
@@ -2093,20 +2107,20 @@
        * @param a_self The tooltip helper instance
        * @return the handler function
        */
-      _create_redraw_timer_handler: function (a_self) {
+      _create_redraw_timer_handler (a_self) {
         return function () {
           a_self._repaintPage();
         }
-      },
+      }
 
-      _resetScroll: function () {
+      _resetScroll () {
         if ( this._scrollContainer ) {
           this._scrollContainer.scrollTop  = 0;
           this._scrollContainer.scrollLeft = 0;
         }
-      },
+      }
 
-      _adjustScroll: function () {
+      _adjustScroll () {
         if ( this._scrollContainer ) {
           var inputCr = this.$.input.getBoundingClientRect();
           var leftEdge, rightEdge, topEdge, bottomEdge;
@@ -2132,7 +2146,7 @@
           this._scrollContainer.scrollTop  += topDelta + bottomDelta;
           this._scrollContainer.scrollLeft += leftDelta + rightDelta;
         }
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -2140,7 +2154,7 @@
       //                                                                                       //
       //***************************************************************************************//
 
-      _addDocumentLine: function (a_src_widget) {
+      _addDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
           this._sendCommand('document add band "' + this._bands[this._context_menu_idx]._type +
                                     '" ' + this._bands[this._context_menu_idx]._id + ';',
@@ -2155,9 +2169,9 @@
                               }
                             });
         }
-      },
+      }
 
-      _removeDocumentLine: function (a_src_widget) {
+      _removeDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
           this._sendCommand('document remove band "' + this._bands[this._context_menu_idx]._type +
                                     '" ' + this._bands[this._context_menu_idx]._id + ';',
@@ -2172,9 +2186,9 @@
                               }
                             });
         }
-      },
+      }
 
-      _binaryFindBandByY: function (a_y) {
+      _binaryFindBandByY (a_y) {
 
         if ( this._bands !== undefined && this._bands.length > 0 ) {
           var mid;
@@ -2198,9 +2212,9 @@
           }
         }
         return -1; // Not found!
-      },
+      }
 
-      _update_context_menu: function (a_y) {
+      _update_context_menu (a_y) {
 
         if ( this._edition === false ) {
           this._deactivateLineContextMenu();
@@ -2235,9 +2249,9 @@
             }
           }
         }
-      },
+      }
 
-      _activateLineContextMenu: function (a_band) {
+      _activateLineContextMenu (a_band) {
         var button_y = a_band._ty + a_band._height / 2 - (this._BTN_SIZE * this._ratio) / 2;
         var button_x = (this._page_width - this._right_margin) * this._sx;
 
@@ -2251,12 +2265,12 @@
           this.$.line_add_button.style.display = 'inline-block';
           this.$.line_del_button.style.display = 'inline-block';
         }
-      },
+      }
 
-      _deactivateLineContextMenu: function (a_band) {
+      _deactivateLineContextMenu (a_band) {
         this.$.line_add_button.style.display = 'none';
         this.$.line_del_button.style.display = 'none';
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -2264,7 +2278,7 @@
       //                                                                                       //
       //***************************************************************************************//
 
-      on_edit_subdocument: function (a_src_widget) {
+      on_edit_subdocument (a_src_widget) {
 
         this.open_document(this._sub_document_jrxml,  // #TODO sub documents again
                            this._locale,
@@ -2278,25 +2292,25 @@
                                 console.log("=== Sub document loaded YUPPIIII!!!!");
                             });
                           });
-      },
+      }
 
-      on_close_subdocument: function () {
+      on_close_subdocument () {
         this.closeDocument();
-      },
+      }
 
-      on_add_entity: function (a_src_widget) {
+      on_add_entity (a_src_widget) {
         console.log("*** ADD entity");
-      },
+      }
 
       /**
        * Cover the whole canvas with a white transparent overlay
        */
-      _washout_canvas: function () {
+      _washout_canvas () {
         var saved_fill = this._ctx.fillStyle;
         this._ctx.fillStyle = 'rgba(255,255,255,0.5)';
         this._ctx.fillRect(0,0, this._canvas.width, this._canvas.height);
         this._ctx.fillStyle = saved_fill;
-      },
+      }
 
       /**
        * Update total page count when a chaper page count is updated
@@ -2304,7 +2318,7 @@
        * @param {number} chapterIndex the index of the chapter that changed
        * @param {number} pageCount the updated page counts
        */
-      _updatePageCount: function (chapterIndex, pageCount) {
+      _updatePageCount (chapterIndex, pageCount) {
         var previousTotalPages = this._totalPageCount;
 
         if ( this._document && this._document.chapters && chapterIndex >= 0 && chapterIndex < this._document.chapters.length) {
@@ -2315,14 +2329,14 @@
             this._fireEvent('casper-epaper-notification', { message: 'update:variable,PAGE_COUNT,' + this._totalPageCount + ';' });
           }
         }
-      },
+      }
 
       /**
        * Given the chapter page number calculate the document page number and fire update event
        *
        * @param {number} pageNumber
        */
-      _updatePageNumber: function (pageNumber) {
+      _updatePageNumber (pageNumber) {
 
         if ( this._document && this._document.chapters ) {
           var page = pageNumber;
@@ -2335,7 +2349,7 @@
           }
           this._pageNumber = page;
         }
-      },
+      }
 
       //***************************************************************************************//
       //                                                                                       //
@@ -2343,20 +2357,20 @@
       //                                                                                       //
       //***************************************************************************************//
 
-      _sendCommand: function (a_message, a_callback) {
+      _sendCommand (a_message, a_callback) {
         this._request_callback = a_callback || this.default_ws_handler;
         this._socket.sendCommand(a_message, this._request_callback);
-      },
+      }
 
 
-      _getData: function (route, callback) {
+      _getData (route, callback) {
         if ( this._getDataCallback === undefined ) {
           this._getDataCallback = callback;
           this._socket.sendCommand('get data "'+route+'";', this._request_callback);
         }
-      },
+      }
 
-      _callRpc: function (a_invoke_id, a_command, a_success_handler, a_failure_handler) {
+      _callRpc (a_invoke_id, a_command, a_success_handler, a_failure_handler) {
 
         a_failure_handler = a_failure_handler || function (a_epaper, a_message) {
           if ( a_epaper._listener !== undefined ) {
@@ -2376,18 +2390,18 @@
           }
 
         });
-      },
+      }
 
-      disconnect: function () {
+      disconnect () {
         this._socket.disconnect();
-      },
+      }
 
       // default websocket handler
-      default_ws_handler: function (a_msg) {
+      default_ws_handler (a_msg) {
 
-      },
+      }
 
-      _onSocketMessage: function (a_message) {
+      _onSocketMessage (a_message) {
         switch (a_message.data[0]) {
           case 'S':
             if ( a_message.data.indexOf('S:ok:data:') === 0 ) {
@@ -2477,30 +2491,33 @@
             // ignore
             break;
         }
-      },
+      }
 
-      _onSocketOpen: function (a_message) {
+      _onSocketOpen (a_message) {
         this._is_socket_open = true;
         this._fireEvent('casper-socket-open', { casperEpaper: this});
-      },
+      }
 
-      _onSocketClose: function (a_message) {
+      _onSocketClose (a_message) {
         this._is_socket_open = false;
         this._fireEvent('casper-socket-close', { casperEpaper: this});
-      },
+      }
 
-      _isSocketOpen: function() {
+      _isSocketOpen() {
         return this._is_socket_open;
-      },
+      }
 
-      _fireEvent: function (eventName, eventData) {
+      _fireEvent (eventName, eventData) {
         if ( this.iframe ) {
           window.parent.document.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
         } else {
+          // @TODO remove legacy API
           this.fire(eventName, eventData);
         }
       }
 
-    });
+    }
+
+    window.customElements.define(CasperEpaper.is, CasperEpaper);
   </script>
 </dom-module>

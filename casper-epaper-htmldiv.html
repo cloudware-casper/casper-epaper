@@ -24,47 +24,56 @@
 `casper-htmldiv` a div whose HTML is feed by the innerHtml attribute
 -->
 <dom-module id="casper-epaper-htmldiv">
-  <style>
-    .highligth {
-      border: 1px solid #ccc;
-      font-weight: bold;
-      border-radius: 4px;
-    }
-    .justify {
-      display: flex;
-      align-items: stretch;
-      justify-content: space-between;
-    }
-    .normal {
-      display: flex;
-      align-items: stretch;
-    }
-    .main {
-      flex: flex-grow;
-    }
-    .left {
-      margin-right: 5px;
-    }
-    .right {
-      margin-left: 5px;
-    }
-  </style>
   <template>
+    <style>
+      .highligth {
+        border: 1px solid #ccc;
+        font-weight: bold;
+        border-radius: 4px;
+      }
+      .justify {
+        display: flex;
+        align-items: stretch;
+        justify-content: space-between;
+      }
+      .normal {
+        display: flex;
+        align-items: stretch;
+      }
+      .main {
+        flex: flex-grow;
+      }
+      .left {
+        margin-right: 5px;
+      }
+      .right {
+        margin-left: 5px;
+      }
+    </style>
     <div id='content'></div>
   </template>
   <script>
-    Polymer({
-      is: 'casper-epaper-htmldiv',
-      properties: {
-        innerHtml: {
-          type: Object,
-          observer: '_onInnerHtmlChanged'
-        }
-      },
-      /** copies the html from the attribute into the node DOM */
-      _onInnerHtmlChanged: function (a_html) {
-        Polymer.dom(this.$.content).innerHTML = a_html;
+    class CasperEpaperHtmldiv extends Polymer.Element {
+
+      static get is () {
+        return 'casper-epaper-htmldiv';
       }
-    });
+
+      static get properties () {
+        return {
+          innerHtml: {
+            type: Object,
+            observer: '_onInnerHtmlChanged'
+          }          
+        };
+      }
+
+      /** copies the html from the attribute into the node DOM */
+      _onInnerHtmlChanged (html) {
+          Polymer.dom(this.$.content).innerHTML = html; // @TODO port to 2.0?
+      }
+    }
+
+    window.customElements.define(CasperEpaperHtmldiv.is, CasperEpaperHtmldiv);
   </script>
 </dom-module>

@@ -146,7 +146,7 @@
         };
       }
 
-      /* TODO port to 2.0 
+      /* TODO port to 2.0
       behaviors: [
         Polymer.CasperI18nBehavior
       ],
@@ -154,7 +154,7 @@
       /*
        * Constants
        */
-      /* TODO port to 2.0 
+      /* TODO port to 2.0
 
       _BTN_SIZE:        24,  // Size is in pixels not pt
       _KAPPA:           .5522848,
@@ -170,7 +170,7 @@
       ready () {
         super.ready ();
         this._calculateAttributeDefaults();
-
+        window.ep = this;
         this._socket            = this.socket;
         this._canvas            = this.$.canvas;
         this._canvas_width      = this._canvas.width;
@@ -391,11 +391,6 @@
         return false;
       }
 
-      // NOTE @TODO will be delete when we move to session based man grade authentication
-      jsonApiConfig (configuration) {
-        this._jsonApiConfig = configuration;
-      }
-
       /**
        * Set the zoom factor (document pt to screen px ratio)
        *
@@ -507,7 +502,6 @@
           return undefined;
         }
 
-        var ja_cfg = JSON.parse(this._jsonApiConfig);
         var job = {
           tube: 'casper-print-queue',
           name: name,
@@ -527,13 +521,13 @@
             jrxml: this._document.chapters[i].jrxml + '.jrxml',  // Make this optional on CPQ???
             jsonapi: {
               urn: this._document.chapters[i].path + '?include=lines', // Make this optional on CPQ???
-              prefix: ja_cfg.prefix,                         // TODO SET ALL OF THese values TO NULL when session auth is in place
-              user_id: ja_cfg.user_id,     // TODO SET ALL OF THese values TO NULL when session auth is in place
-              company_id: ja_cfg.company_id, // TODO SET ALL OF THese values TO NULL when session auth is in place
-              company_schema: ja_cfg.company_schema, // TODO SET ALL OF THese values TO NULL when session auth is in place
-              sharded_schema: ja_cfg.sharded_schema, // TODO SET ALL OF THese values TO NULL when session auth is in place
-              accounting_schema: ja_cfg.accounting_schema, // TODO SET ALL OF THese values TO NULL when session auth is in place
-              accounting_prefix: ja_cfg.accounting_prefix // TODO SET ALL OF THese values TO NULL when session auth is in place
+              prefix: null,
+              user_id: null,
+              company_id: null,
+              company_schema: null,
+              sharded_schema: null,
+              accounting_schema: null,
+              accounting_prefix: null
             }
           }
           job.documents.push(chapter);
@@ -558,7 +552,6 @@
           return undefined;
         }
 
-        var ja_cfg = JSON.parse(this._jsonApiConfig);
         var job = {
           tube: 'casper-print-queue',
           name: name,
@@ -585,13 +578,13 @@
               jrxml: _chapter.jrxml + '.jrxml',
               jsonapi: {
                 urn: _chapter.path + '?include=lines', // Make this optional on CPQ???
-                prefix: ja_cfg.prefix,                         // TODO SET ALL OF THese values TO NULL when session auth is in place
-                user_id: ja_cfg.user_id,     // TODO SET ALL OF THese values TO NULL when session auth is in place
-                company_id: ja_cfg.company_id, // TODO SET ALL OF THese values TO NULL when session auth is in place
-                company_schema: ja_cfg.company_schema, // TODO SET ALL OF THese values TO NULL when session auth is in place
-                sharded_schema: ja_cfg.sharded_schema, // TODO SET ALL OF THese values TO NULL when session auth is in place
-                accounting_schema: ja_cfg.accounting_schema, // TODO SET ALL OF THese values TO NULL when session auth is in place
-                accounting_prefix: ja_cfg.accounting_prefix // TODO SET ALL OF THese values TO NULL when session auth is in place
+                prefix: null,
+                user_id: null,
+                company_id: null,
+                company_schema: null,
+                sharded_schema: null,
+                accounting_schema: null,
+                accounting_prefix: null
               }
             }
 
@@ -659,7 +652,6 @@
         for ( var idx = 0; idx < this._chapterCount; idx++ ) {
           this._document.chapters[idx].locale        = this._document.chapters[idx].locale        || 'pt_PT';
           this._document.chapters[idx].edit          = this._document.chapters[idx].edit          || false;
-          this._document.chapters[idx].subdocument   = this._document.chapters[idx].subdocument   || false;
           this._document.chapters[idx].pageCount     = this._document.pageCount                   || 1;
           this._totalPageCount += this._document.chapters[idx].pageCount;
         }
@@ -677,65 +669,26 @@
         // Promise to open the report layout in case it not loaded yet
         var open_document = function () {
           return new Promise(function (a_resolve, a_reject) {
-            if ( this._jrxml === this._chapter.jrxml && this._locale === this._chapter.locale && this._subdocument === this._chapter.subdocument ) {
+            if ( this._jrxml === this._chapter.jrxml && this._locale === this._chapter.locale ) {
               return a_resolve(this);
             }
-            this._sendCommand('document open "' + this._chapter.jrxml + '","' + this._chapter.locale + '",' + this._chapter.subdocument + ',false;', function (a_response) {
-              var response = this._validate_response('open', a_response);
-              if ( response instanceof Error ) {
+            this.socket.openDocument(this._chapter, function (response) {
+              if ( response.errors !== undefined ) {
                 a_reject(response);
-              } else if ( response !== undefined ) {
+              } else {
 
-                this._message     = response;
-                this._r_idx       = 0;
-                this._document_id = this._getDouble();
-                this._page_width  = this._getDouble();
-                this._page_height = this._getDouble();
+                this._document_id = response.id;
+                this._page_width  = response.page.width;
+                this._page_height = response.page.height;
                 if ( isNaN(this._page_height) ) {
                   this._page_height = 4000;
                 }
-                this._right_margin = this._getDouble();
+                this._right_margin = response.page.margins.right;
                 this._jrxml        = this._chapter.jrxml;
                 this._locale       = this._chapter.locale;
-                this._subdocument  = this._chapter.subdocument;
-
                 a_resolve(this);
               }
-            });
-          }.bind(this));
-        }.bind(this);
-
-        // Promise to configure the JSON API
-        var configure_api = function () {
-          return new Promise(function (a_resolve, a_reject) {
-            var config_msg;
-
-            if ( this.session ) {
-              config_msg = 'document set session "' + this.session + '";';
-            } else {
-              config_msg = 'document config json_api "' + this._jsonApiConfig.replace(/"/g, '""') + '";';
-            }
-            this._sendCommand(config_msg, function (a_response) {
-              var response;
-
-              if ( this.session ) {
-                response = this._validate_response('json_api', a_response);
-              } else {
-                response = this._validate_response('session', a_response);
-              }
-              if ( response instanceof Error ) {
-                a_reject(response);
-              } else {
-                if ( a_response.startsWith('S:ok:json_api') ) {
-                  //this._prefix       = this._chapter.prefix;
-                  //this._schema       = this._chapter.schema;
-                  //this._table_prefix = this._chapter.table_prefix;
-                  a_resolve(self);
-                } else if ( a_response.startsWith('S:ok:session') ) {
-                  a_resolve(self);
-                }
-              }
-            });
+            }.bind(this), this.documentHandler.bind(this))
           }.bind(this));
         }.bind(this);
 
@@ -743,41 +696,38 @@
         var load_document = function () {
           return new Promise(function (a_resolve, a_reject) {
             var args = {
-              edit:        this._chapter.edit,
+              id:          this._document_id,
+              editable:    this._chapter.edit,
               path:        this._chapter.path,
               scale:       this._sx,
-              subdocument: this._subdocument,
               focus:       this._openFocus,
               page:        this._nextPage
             };
-            this._sendCommand('document load "' + JSON.stringify(args).replace(/"/g,'""') + '";', function (a_response) {
-              var response = this._validate_response('load', a_response);
-
-              if ( response instanceof Error ) {
+            this._chapter.id = this._document_id;
+            this.socket.loadDocument(args, function (response) {
+              if ( response.errors !== undefined ) {
                 a_reject(response);
               } else {
-                if ( a_response.startsWith('S:ok:load') ) {
-                  this._path    = this._chapter.path;
-                  this._params  = this._chapter.params;
-                  this._edition = this._chapter.edit;
-                  this._documentScale   = args.scale;
-                  this._scalePxToServer = this._page_width * this._ratio / this._canvas.width;
-                  this.setZoom(this.zoom, true);
-                  this._repaintPage();
-                  this._fireEvent('casper-epaper-loaded', {
-                                                            pageWidth:    this._page_width,
-                                                            pageHeight:   this._page_height,
-                                                            document:     this._document,
-                                                            chapterIndex: this._chapterIndex,
-                                                            pageNumber:   this._pageNumber,
-                                                            pageCount:    this._totalPageCount
-                                                          });
-                  this._loading = false;
-                  this.$.servertip.enabled = true;
-                  a_resolve(this);
-                }
+                this._path    = this._chapter.path;
+                this._params  = this._chapter.params;
+                this._edition = this._chapter.edit;
+                this._documentScale   = args.scale;
+                this._scalePxToServer = this._page_width * this._ratio / this._canvas.width;
+                this.setZoom(this.zoom, true);
+                this._repaintPage();
+                // this._fireEvent('casper-epaper-loaded', {
+                //                                           pageWidth:    this._page_width,
+                //                                           pageHeight:   this._page_height,
+                //                                           document:     this._document,
+                //                                           chapterIndex: this._chapterIndex,
+                //                                           pageNumber:   this._pageNumber,
+                //                                           pageCount:    this._totalPageCount
+                //                                         });
+                 this._loading = false;
+                 this.$.servertip.enabled = true;
+                 a_resolve(this);
               }
-            });
+            }.bind(this));
           }.bind(this));
         }.bind(this);
 
@@ -802,13 +752,14 @@
 
         // ... perform the command sequence ...
         open_document()
-          .then(configure_api)
           .then(load_document)
           .then(post_open)
-          .catch(function(a_error) {
-            alert("Paper error " + a_error);
-            this._clear();
-          }.bind(this));
+          //.catch(function(a_error) {
+          //  alert("Paper error " + a_error);
+          //  this._clear();
+          //}
+          //.bind(this))
+          ;
       }
 
       /**
@@ -925,7 +876,6 @@
         this._locale       = undefined;
         //this._table_prefix = undefined;
         this._edit         = false;
-        this._subdocument  = false;
         this._loading      = false;
         this._openFocus    = undefined;
         this._nextPage     = undefined;
@@ -1071,7 +1021,7 @@
       }
 
       _onPaintMessage (a_message) {
-        this._r_idx   = 1;
+        this._r_idx   = 2; // D:
         this._message = a_message;
         this._paintBand();
       }
@@ -2273,36 +2223,6 @@
         this.$.line_del_button.style.display = 'none';
       }
 
-      //***************************************************************************************//
-      //                                                                                       //
-      //                                ~~~ Band tearing ~~~                                   //
-      //                                                                                       //
-      //***************************************************************************************//
-
-      on_edit_subdocument (a_src_widget) {
-
-        this.open_document(this._sub_document_jrxml,  // #TODO sub documents again
-                           this._locale,
-                           //this._prefix,
-                           //this._schema,
-                           //this._table_prefix,
-                           true,
-                           true,
-                           function (a_epaper, a_page_width, a_page_height) {
-                              a_epaper.load_document(a_epaper._sub_document_uri, undefined, true, true, function(a_epaper) {
-                                console.log("=== Sub document loaded YUPPIIII!!!!");
-                            });
-                          });
-      }
-
-      on_close_subdocument () {
-        this.closeDocument();
-      }
-
-      on_add_entity (a_src_widget) {
-        console.log("*** ADD entity");
-      }
-
       /**
        * Cover the whole canvas with a white transparent overlay
        */
@@ -2358,65 +2278,21 @@
       //                                                                                       //
       //***************************************************************************************//
 
-      _sendCommand (a_message, a_callback) {
-        this._request_callback = a_callback || this.default_ws_handler;
-        this._socket.sendCommand(a_message, this._request_callback);
-      }
-
-
-      _getData (route, callback) {
-        if ( this._getDataCallback === undefined ) {
-          this._getDataCallback = callback;
-          this._socket.sendCommand('get data "'+route+'";', this._request_callback);
-        }
-      }
-
-      _callRpc (a_invoke_id, a_command, a_success_handler, a_failure_handler) {
-
-        a_failure_handler = a_failure_handler || function (a_epaper, a_message) {
-          if ( a_epaper._listener !== undefined ) {
-            a_epaper._listener.on_error(a_message);
-          } else {
-            alert(a_message);
-          }
-        }
-
-        this._sendCommand(a_command, function (a_message) {
-          if ( a_message.indexOf('S:error:') === 0 || a_message.indexOf('S:exception:') === 0 ) {
-            a_failure_handler(this, a_message);
-            return;
-          }
-          if ( a_message.indexOf('S:ok:' + a_invoke_id) === 0 ) {
-            a_success_handler(this, a_message);
-          }
-
-        });
-      }
-
-      disconnect () {
-        this._socket.disconnect();
-      }
-
-      // default websocket handler
-      default_ws_handler (a_msg) {
-
-      }
-
-      _onSocketMessage (a_message) {
-        switch (a_message.data[0]) {
+      documentHandler (a_message) {
+        switch (a_message[0]) {
           case 'S':
-            if ( a_message.data.indexOf('S:ok:data:') === 0 ) {
+            if ( a_message.indexOf('S:ok:data:') === 0 ) {
               if ( this._getDataCallback !== undefined ) {
-                this._getDataCallback(a_message.data.substring('S:ok:data:'.length));
+                this._getDataCallback(a_message.substring('S:ok:data:'.length));
                 this._getDataCallback = undefined;
               }
             } else {
-              this._request_callback(a_message.data);
+              this._request_callback(a_message);
             }
             break;
 
           case 'N':
-            var message = a_message.data.substring(2);
+            var message = a_message.substring(2);
 
             if ( message.startsWith('update:focus,forward') ) {
               if ( this.nextChapter() ) {
@@ -2446,7 +2322,7 @@
           case 'E':
 
             this._r_idx   = 1;
-            this._message = a_message.data;
+            this._message = a_message;
 
             var w = this._getDouble();
             var k = this._message.substring(this._r_idx, this._r_idx + w);
@@ -2485,27 +2361,13 @@
             break;
 
           case 'D':
-            this._onPaintMessage(a_message.data);
+            this._onPaintMessage(a_message);
             break;
 
           default:
             // ignore
             break;
         }
-      }
-
-      _onSocketOpen (a_message) {
-        this._is_socket_open = true;
-        this._fireEvent('casper-socket-open', { casperEpaper: this});
-      }
-
-      _onSocketClose (a_message) {
-        this._is_socket_open = false;
-        this._fireEvent('casper-socket-close', { casperEpaper: this});
-      }
-
-      _isSocketOpen() {
-        return this._is_socket_open;
       }
 
       _fireEvent (eventName, eventData) {

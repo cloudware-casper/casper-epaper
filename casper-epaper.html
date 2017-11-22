@@ -223,6 +223,10 @@
           y += 35;
         }
         this._ctx.restore();
+
+        this.$.canvas.addEventListener('mousemove', e => this._moveHandler(e));
+        this.$.canvas.addEventListener('mousedown', e => this._mouseDownHandler(e));
+        this.$.canvas.addEventListener('mouseup'  , e => this._mouseUpHandler(e));
       }
 
       connectedCallback () {
@@ -839,7 +843,6 @@
        * @brief Creates the handler that listens to mouse movements
        */
       _moveHandler (a_event) {
-
         if ( this.$.input.overlayVisible ) {
           return;
         }
@@ -861,7 +864,9 @@
       }
 
       _mouseUpHandler (a_event) {
-        this._sendCommand("set click " + (event.offsetX * this._scalePxToServer).toFixed(2) + ', ' + (event.offsetY * this._scalePxToServer).toFixed(2) + ';');
+        this.socket.sendClick(this._documentId,
+                              parseFloat((event.offsetX * this._scalePxToServer).toFixed(2)), 
+                              parseFloat((event.offsetY * this._scalePxToServer).toFixed(2)));
         if ( this._edition ) {
           this.$.input.grabFocus();
         }

@@ -145,17 +145,6 @@
         };
       }
 
-      /* @TODO port to 2.0
-      listeners: {
-        'keypress': '_onKeypress',
-        'keydown': '_onKeyDown',
-        'mousedown': '_onMouseDown',
-        'mouseup': '_onMouseUp',
-        'tap': '_onTap'
-      },
-
-      */
-
       ready () {
         super.ready();
         //this._input          = this.$.input;
@@ -166,8 +155,11 @@
         this.setVisible(false);
         this.$.combo.setPositionTarget(this);
 
-        this.addEventListener('keypress', e => this._onKeypress(e));
-        this.addEventListener('keydown', e => this._onKeyDown(e));
+        this.addEventListener('keypress' , e => this._onKeypress(e));
+        this.addEventListener('keydown'  , e => this._onKeyDown(e));
+        this.addEventListener('mousedown', e => this._onMouseDown(e));
+        this.addEventListener('mouseup'  , e => this._onMouseUp(e));
+        this.addEventListener('tap'      , e => this._onTap(e));
       }
 
       connectedCallback () {
@@ -256,8 +248,8 @@
         this._textArea.style.marginLeft  = Math.max(tl,1) + 'px';
         this._textArea.style.marginRight = Math.max(tl,1) + 'px';
         //this._textArea.style.marginTop   = Math.max(bl + top, 1) + 'px';
-        this._textArea.style.fontFamily  = this.epaper._font_spec[this.epaper._FONT_NAME_INDEX];
-        this._textArea.style.fontSize    = this.epaper._font_spec[this.epaper._SIZE_INDEX] / ratio + 'px';
+        this._textArea.style.fontFamily  = this.epaper._font_spec[CasperEpaper.FONT_NAME_INDEX];
+        this._textArea.style.fontSize    = this.epaper._font_spec[CasperEpaper.SIZE_INDEX] / ratio + 'px';
         this._textArea.style.color       = this.epaper._text_color;
       }
 
@@ -612,10 +604,10 @@
         }
 
         if ( ['enter', 'tab', 'shift+tab'].indexOf(vkey) > -1 ) {
-          const motion = vkey === 'shift+tab' ? 'left' : 'right';
-          this.epaper.socket.setText(this.epaper._documentId, this._escapeForServer(this._textArea.value), motion, this._setTextResponse.bind(this));
-          //this.epaper._sendCommand('set text "' + this._escapeForServer(this._textArea.value) + '" true; set key "'
-          //                            + vkey.replace(/\+/g, '"+"') + '";');
+          this.epaper.socket.setText(this.epaper._documentId, 
+                                     this._textArea.value, 
+                                     vkey === 'shift+tab' ? 'left' : 'right', 
+                                     this._setTextResponse.bind(this));
           event.preventDefault();
           return;
         }
@@ -810,13 +802,6 @@
       /*                             ~~~ Input helper functions ~~~                            */
       /*                                                                                       */
       /*****************************************************************************************/
-
-      /**
-       * Escapes double quotes for the server protocol
-       */
-      _escapeForServer (text) {
-        return text.split('"').join('""');
-      }
 
       /**
        * Convert keycode to virtual key code that is understood by the server

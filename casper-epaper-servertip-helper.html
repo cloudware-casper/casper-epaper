@@ -160,10 +160,10 @@
         this._center_x = x;
         this._center_y = y;
 
-        if ( this._timer !== undefined ) {
-          this.cancelAsync(this._timer);
-        }
-        this._timer = this.async(this._onOverHandler.bind(this), this.hoveringTime);
+        //if ( this._timer !== undefined ) {
+        //  this.cancelAsync(this._timer);
+        //}
+        //this._timer = this.async(this._onOverHandler.bind(this), this.hoveringTime);
       }
 
       /**
@@ -171,7 +171,7 @@
        */
       _resetTimer () {
         if ( this._timer !== undefined ) {
-          this.cancelAsync(this._timer);
+          //this.cancelAsync(this._timer);
           this._timer = undefined;
         }
       }

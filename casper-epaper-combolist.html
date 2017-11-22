@@ -572,10 +572,10 @@ An auxiliary combo list for the casper-epaper editor
       _dialogOpened () {
         //this._query = '';
         this._onQueryChanged();
-        this.async(function () {
-          this.$.list.fire('iron-resize');
-          this.moveSelection('keep');
-        }.bind(this), 200);
+        //this.async(function () {
+        //  this.$.list.fire('iron-resize');
+        //  this.moveSelection('keep');
+        //}.bind(this), 200);
         this.$.input.focus();
       }
 
@@ -608,22 +608,22 @@ An auxiliary combo list for the casper-epaper editor
           }
 
           this._selectedId = this.selectedItem ?  this.selectedItem._id : undefined;
-          this.fire('on-combo-selection-changed', {
-            displayValue: displayValue,
-            selectedId:   this._selectedId,
-            matchStart:   matchStart,
-            matchEnd:     matchEnd
-          });
+          //this.fire('on-combo-selection-changed', {
+          //  displayValue: displayValue,
+          //  selectedId:   this._selectedId,
+          //  matchStart:   matchStart,
+          //  matchEnd:     matchEnd
+          //});
         }
       }
 
       _dialogClosed (a_event) {
-        this.fire('on-combo-list-closed', {
-            selectedId:   this.selectedItem ?  this.selectedItem._id : undefined,
-            displayValue: this.selectedItem ? (this._notifiyIdOnly ? this.selectedItem._id : this.selectedItem._displayValue) : '',
-            previousId:   this._initialId,
-            closingKey:   this._closingKey
-          });
+        //this.fire('on-combo-list-closed', {
+        //    selectedId:   this.selectedItem ?  this.selectedItem._id : undefined,
+        //    displayValue: this.selectedItem ? (this._notifiyIdOnly ? this.selectedItem._id : this.selectedItem._displayValue) : '',
+        //    previousId:   this._initialId,
+        //    closingKey:   this._closingKey
+        //  });
       }
 
       _inputTap (a_event) {
@@ -732,17 +732,17 @@ An auxiliary combo list for the casper-epaper editor
         }
         model_len    = this.items.length;
         fields_len   = this.displayFields.length;
-        filter_len   = filter.length;
+        const filter_len   = filter.length;
         visible_rows = [];
-        len          = this.items.length;
+        let len          = this.items.length;
 
         // ... iterate the model record by record one line at time ...
-        for ( i = 0; i < model_len; i++ ) {
+        for ( let i = 0; i < model_len; i++ ) {
           fitem = {};
           item_visible = false;
 
           // ... filter each field individually ...
-          for ( f = 0; f < fields_len; f++ ) {
+          for ( let f = 0; f < fields_len; f++ ) {
             field = this.displayFields[f];
             match = [];
 
@@ -750,7 +750,7 @@ An auxiliary combo list for the casper-epaper editor
             text         = this.items[i][field];
             fitem[field] = text;
 
-            for ( k = 0; k < filter_len; k++) {
+            for ( let k = 0; k < filter_len; k++) {
               ms = _collatedSearch(text, filter[k]);
               if ( ms !== -1 ) {
                 match.push({ start: ms, end: ms+filter[k].length - 1});
@@ -852,7 +852,7 @@ An auxiliary combo list for the casper-epaper editor
         var fields_len = this.displayFields.length;
         var it = [];
 
-        for ( f = 0; f < fields_len; f++ ) {
+        for ( let f = 0; f < fields_len; f++ ) {
           it.push(a_item[this.displayFields[f]]);
         }
         return it.join(' - ');

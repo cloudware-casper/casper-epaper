@@ -167,7 +167,7 @@
         this._message           = '';
         this._r_idx             = 0.0;
         this._bands             = undefined;
-        this._document_id       = undefined;
+        this._documentId        = undefined;
         this._images            = {};
         this._focused_band_id   = undefined;
         this._redraw_timer_key  = '_epaper_redraw_timer_key';
@@ -243,7 +243,7 @@
       }
 
       isPrintableDocument () {
-        return this._document_id === undefined || this._document === undefined || this._document.chapters === undefined || this._document.loading
+        return this._documentId === undefined || this._document === undefined || this._document.chapters === undefined || this._document.loading
       }
 
       //***************************************************************************************//
@@ -458,13 +458,13 @@
         this._fireEvent('casper-epaper-notification', { message: 'update:variable,PAGE_COUNT,1;' });
         this._fireEvent('casper-epaper-notification', { message: 'update:variable,PAGE_NUMBER,1;' });
         this._document = undefined;
-        this._callRpc('close', 'document close "' + this._document_id + '";', function(a_epaper, a_message) {
-            var expected_response = 'S:ok:close:' + a_epaper._document_id;
+        this._callRpc('close', 'document close "' + this._documentId  + '";', function(a_epaper, a_message) {
+            var expected_response = 'S:ok:close:' + a_epaper._documentId; 
             if ( a_message.indexOf(expected_response) === 0 ) {
               if ( a_message.length > expected_response.length ) {
-                a_epaper._document_id = a_message.substring(expected_response.length + 1).replace('\n', '');
+                a_epaper._documentId  = a_message.substring(expected_response.length + 1).replace('\n', '');
               } else {
-                a_epaper._document_id = undefined;
+                a_epaper._documentId  = undefined;
               }
             }
             if ( undefined !== a_success_handler ) {
@@ -616,9 +616,9 @@
         this._chapterCount   = this._document.chapters.length;
         this._totalPageCount = 0;
         for ( var idx = 0; idx < this._chapterCount; idx++ ) {
-          this._document.chapters[idx].locale        = this._document.chapters[idx].locale        || 'pt_PT';
-          this._document.chapters[idx].edit          = this._document.chapters[idx].edit          || false;
-          this._document.chapters[idx].pageCount     = this._document.pageCount                   || 1;
+          this._document.chapters[idx].locale    = this._document.chapters[idx].locale    || 'pt_PT';
+          this._document.chapters[idx].editable  = this._document.chapters[idx].editable  || false;
+          this._document.chapters[idx].pageCount = this._document.pageCount               || 1;
           this._totalPageCount += this._document.chapters[idx].pageCount;
         }
         this._chapterIndex = 0;
@@ -643,7 +643,7 @@
                 a_reject(response);
               } else {
 
-                this._document_id = response.id;
+                this._documentId  = response.id;
                 this._page_width  = response.page.width;
                 this._page_height = response.page.height;
                 if ( isNaN(this._page_height) ) {
@@ -662,21 +662,21 @@
         var load_document = function () {
           return new Promise(function (a_resolve, a_reject) {
             var args = {
-              id:          this._document_id,
-              editable:    this._chapter.edit,
+              id:          this._documentId,
+              editable:    this._chapter.editable,
               path:        this._chapter.path,
               scale:       this._sx,
               focus:       this._openFocus,
               page:        this._nextPage
             };
-            this._chapter.id = this._document_id;
+            this._chapter.id = this._documentId;
             this.socket.loadDocument(args, function (response) {
               if ( response.errors !== undefined ) {
                 a_reject(response);
               } else {
                 this._path    = this._chapter.path;
                 this._params  = this._chapter.params;
-                this._edition = this._chapter.edit;
+                this._edition = this._chapter.editable;
                 this._documentScale   = args.scale;
                 this._scalePxToServer = this._page_width * this._ratio / this._canvas.width;
                 this.setZoom(this.zoom, true);
@@ -772,7 +772,7 @@
           this._canvas_width  = width;
           this._canvas_height = height;
           this._setupScale();
-          if ( this._document_id !== undefined && this._documentScale !== this._sx ) {
+          if ( this._documentId !== undefined && this._documentScale !== this._sx ) {
             this._sendCommand('document set scale ' + this._sx + ' ' + this._sx + ';');
             this._documentScale = this._sx;
           }

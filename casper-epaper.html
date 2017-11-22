@@ -95,6 +95,7 @@
 
       static get properties () {
         return {
+          /** Websocket that connects to the casper server */
           socket: Object,
           /** component width in px */
           width: {
@@ -116,16 +117,6 @@
             type: Object,
             observer: '_documentChanged'
           },
-          /** websocket URL */
-          url: {
-            type: String,
-            value: undefined
-          },
-          /** websocket port number, defaults to current page port */
-          port: {
-            type: String,
-            value: undefined
-          },
           /** set when the component is inside an iframe */
           iframe: {
             type: Boolean,
@@ -133,11 +124,6 @@
           },
           /** id of the containing element that can be scrolled */
           scroller: {
-            type: String,
-            value: undefined
-          },
-          /** server session */
-          session: {
             type: String,
             value: undefined
           }
@@ -165,8 +151,7 @@
 
       ready () {
         super.ready ();
-        this._calculateAttributeDefaults();
-        window.ep = this;
+        window.ep = this; // TODO MARTELADA
         this._socket            = this.socket;
         this._canvas            = this.$.canvas;
         this._canvas_width      = this._canvas.width;
@@ -591,23 +576,23 @@
       }
 
       // This more a Refresh??
-      reload_document (a_success_handler) {
-        this._callRpc('reload', 'document reload;', function(a_epaper, a_message) {
-            if ( undefined !== a_success_handler ) {
-              a_success_handler(a_message.substring('S:ok:reload:'.length));
-            }
-          }
-        );
-      }
-
-      document_focus_row (a_index, a_success_handler) {
-        this._callRpc('focused row', 'document set focused row ' + a_index + ';', function(a_epaper, a_message) {
-            if ( undefined !== a_success_handler ) {
-              a_success_handler(a_message.substring('S:ok:focused row:'.length));
-            }
-          }
-        );
-      }
+      //reload_document (a_success_handler) {
+      //  this._callRpc('reload', 'document reload;', function(a_epaper, a_message) {
+      //      if ( undefined !== a_success_handler ) {
+      //        a_success_handler(a_message.substring('S:ok:reload:'.length));
+      //      }
+      //    }
+      //  );
+      //}
+//
+      //document_focus_row (a_index, a_success_handler) {
+      //  this._callRpc('focused row', 'document set focused row ' + a_index + ';', function(a_epaper, a_message) {
+      //      if ( undefined !== a_success_handler ) {
+      //        a_success_handler(a_message.substring('S:ok:focused row:'.length));
+      //      }
+      //    }
+      //  );
+      //}
 
       _documentChanged (document) {
         if ( document ) {
@@ -620,20 +605,6 @@
       //                             ~~~ Private methods ~~~                                   //
       //                                                                                       //
       //***************************************************************************************//
-
-      _validate_response (a_expected_response, a_response) {
-        var expected_start;
-
-        expected_start = 'S:ok:' + a_expected_response;
-        if ( match = a_response.match(/^S:failure:.*?:(.*)/) ) {
-          return new Error(JSON.parse(match[1]));
-        } else if ( a_response.indexOf('S:error:') === 0 || a_response.indexOf('S:exception:') === 0 ) {
-          return new Error(a_response);
-        } else if (a_response.indexOf(expected_start) === 0 ) {
-          return a_response.substring(expected_start.length + 1);
-        }
-        return undefined;
-      }
 
       /**
        * Sanitizes the document object model, auto selects the first chapter
@@ -784,21 +755,6 @@
       //***************************************************************************************//
 
       /**
-       * @brief Assign defaults to undefined component attributes
-       */
-      _calculateAttributeDefaults () {
-        if ( this.url === undefined ) {
-          if ( window.location.protocol === 'https:' ) {
-            this.url = 'wss://' + window.location.hostname;
-          } else {
-            this.url = 'ws://' + window.location.hostname;
-          }
-        }
-        this.port = this.port || window.location.port;
-        this.uri  = this.uri  || 'epaper';
-      }
-
-      /**
        * Change the size of the epaper canvas.
        *
        * @param {number} width canvas width in px
@@ -866,9 +822,7 @@
         this._path         = undefined;
         this._params       = undefined;
         this._jrxml        = undefined;
-        //this._prefix       = undefined;
         this._locale       = undefined;
-        //this._table_prefix = undefined;
         this._edit         = false;
         this._loading      = false;
         this._openFocus    = undefined;

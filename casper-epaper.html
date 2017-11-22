@@ -87,8 +87,6 @@
 
   <script>
 
-    /* @TODO delete EPaperSocket_Initialize(window); */
-
     class CasperEpaper extends Polymer.Element {
 
       static get is () {
@@ -116,7 +114,7 @@
           /** object that specifies the document being displayed/edited */
           document: {
             type: Object,
-            observer: '_document_changed'
+            observer: '_documentChanged'
           },
           /** websocket URL */
           url: {
@@ -154,18 +152,16 @@
       /*
        * Constants
        */
-      /* TODO port to 2.0
-
-      _BTN_SIZE:        24,  // Size is in pixels not pt
-      _KAPPA:           .5522848,
-      _BOLD_MASK:       0x01,
-      _ITALIC_MASK:     0x02,
-      _UNDERLINE_MASK:  0x04,
-      _STRIKEOUT_MASK:  0x08,
-      _BOLD_INDEX:      0,
-      _ITALIC_INDEX:    1,
-      _SIZE_INDEX:      2,
-      _FONT_NAME_INDEX: 4, */
+      static get BTN_SIZE ()        { return 24;       }
+      static get KAPPA ()           { return .5522848; }
+      static get BOLD_MASK ()       { return 0x01;     }
+      static get ITALIC_MASK ()     { return 0x02;     }
+      static get UNDERLINE_MASK ()  { return 0x04;     }
+      static get STRIKEOUT_MASK ()  { return 0x08;     }
+      static get BOLD_INDEX ()      { return 0;        }
+      static get ITALIC_INDEX ()    { return 1;        }
+      static get SIZE_INDEX ()      { return 2;        }
+      static get FONT_NAME_INDEX () { return 4;        }
 
       ready () {
         super.ready ();
@@ -224,7 +220,6 @@
           this._right_margin = this._master_doc_right_margin;
         }
 
-
         // ... clear the page before we start ...
         this.setZoom(this.zoom, true);
         this._setupScale();
@@ -235,9 +230,9 @@
         this._ctx.save();
         this._ctx.fillStyle = "#F0F0F0"
         this._ctx.textAlign="center";
-        this._font_spec[this._SIZE_INDEX] = 20;
+        this._font_spec[CasperEpaper.SIZE_INDEX] = 20;
         for ( var i = 0; i < styles.length; i++ ) {
-          this._font_spec[this._BOLD_INDEX] = styles[i];
+          this._font_spec[CasperEpaper.BOLD_INDEX] = styles[i];
           this._ctx.font = this._font_spec.join('');
           this._ctx.fillText("Powered by CASPER ePaper", this._canvas.width / 2, y);
           y += 35;
@@ -614,10 +609,10 @@
         );
       }
 
-      _document_changed (a_document) {
-        if (this._socket === undefined || a_document == null) return; // MARTELADA
-        console.log('And then document wos set' + document);
-        this.open(a_document);
+      _documentChanged (document) {
+        if ( document ) {
+          this.open(document);
+        }
       }
 
       //***************************************************************************************//
@@ -754,12 +749,11 @@
         open_document()
           .then(load_document)
           .then(post_open)
-          //.catch(function(a_error) {
+          .catch(function(a_error) {
           //  alert("Paper error " + a_error);
-          //  this._clear();
-          //}
-          //.bind(this))
-          ;
+            console.log(a_error.errors[0].internal.why);
+            this._clear();
+          }.bind(this));
       }
 
       /**
@@ -1804,8 +1798,8 @@
               y = this._getDouble();
               w = this._getDouble();
               h = this._getDouble();
-              var ox = (w / 2) * this._KAPPA,
-                  oy = (h / 2) * this._KAPPA,
+              var ox = (w / 2) * CasperEpaper.KAPPA,
+                  oy = (h / 2) * CasperEpaper.KAPPA,
                   xe = x + w,
                   ye = y + h,
                   xm = x + w / 2,
@@ -1902,7 +1896,7 @@
               w = this._getDouble();
               this._t = this._message.substring(this._r_idx, this._r_idx + w);
               this._r_idx += w + 1;
-              this._font_spec[this._FONT_NAME_INDEX] = this._t;
+              this._font_spec[CasperEpaper.FONT_NAME_INDEX] = this._t;
               this._ctx.font = this._font_spec.join('');
               break;
 
@@ -1925,9 +1919,9 @@
                   this.$.input._f_underline_position  = this._getDouble();
               } else {
                   this._font_mask = this._getDouble();
-                  this._font_spec[this._SIZE_INDEX]   = Math.round(this._getDouble());
-                  this._font_spec[this._BOLD_INDEX]   = (this._font_mask & this._BOLD_MASK)   ? 'bold '   : '';
-                  this._font_spec[this._ITALIC_INDEX] = (this._font_mask & this._ITALIC_MASK) ? 'italic ' : '';
+                  this._font_spec[CasperEpaper.SIZE_INDEX]   = Math.round(this._getDouble());
+                  this._font_spec[CasperEpaper.BOLD_INDEX]   = (this._font_mask & CasperEpaper.BOLD_MASK)   ? 'bold '   : '';
+                  this._font_spec[CasperEpaper.ITALIC_INDEX] = (this._font_mask & CasperEpaper.ITALIC_MASK) ? 'italic ' : '';
                   this._ctx.font = this._font_spec.join('');
               }
               break;
@@ -2203,12 +2197,12 @@
       }
 
       _activateLineContextMenu (a_band) {
-        var button_y = a_band._ty + a_band._height / 2 - (this._BTN_SIZE * this._ratio) / 2;
+        var button_y = a_band._ty + a_band._height / 2 - (CasperEpaper.BTN_SIZE * this._ratio) / 2;
         var button_x = (this._page_width - this._right_margin) * this._sx;
 
         this.$.line_add_button.style.left = (button_x / this._ratio ) + 'px';
         this.$.line_add_button.style.top  = (button_y / this._ratio ) + 'px';
-        button_x += this._BTN_SIZE * this._ratio * 0.9;
+        button_x += CasperEpaper.BTN_SIZE * this._ratio * 0.9;
         this.$.line_del_button.style.left = (button_x / this._ratio ) + 'px';
         this.$.line_del_button.style.top  = (button_y / this._ratio ) + 'px';
 

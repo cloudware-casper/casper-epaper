@@ -116,13 +116,10 @@
         */
       _getHintResponse (response) {
         if ( response.success === true && response.hint.length > 0 ) {
-          const bb = response.bbox;
-
-          console.log(response.bbox)
-          this._left   = bb.x / this._scalePxToServer;
-          this._top    = bb.y / this._scalePxToServer;
-          this._width  = bb.w / this._scalePxToServer;
-          this._height = bb.h / this._scalePxToServer;
+          this._left   = response.bbox.x / this._scalePxToServer;
+          this._top    = response.bbox.y / this._scalePxToServer;
+          this._width  = response.bbox.w / this._scalePxToServer;
+          this._height = response.bbox.h / this._scalePxToServer;
           this.input.showTooltip(response.hint.toUpperCase(), { left: this._left, top: this._top, width: this._width, height: this._height});
         }
       }

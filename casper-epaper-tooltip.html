@@ -108,17 +108,12 @@
         this._ctx = this.$.canvas.getContext('2d');
         this._tipEdge = 'N';
         this._setupPixelRatio();
+        this.addEventListener('tap', e => this.hide(e));
       }
 
       connectedCallback () {
         super.connectedCallback();
-        //this.listen(this, 'tap', 'hide'); @TODO port 2.0
         this._showing = true;
-      }
-
-      disconnectedCallback () {
-        super.disconnectedCallback();
-        //this.unlisten(this, 'tap', 'hide'); @TODO port 2.0
       }
 
       /**
@@ -145,10 +140,6 @@
           this.$.canvas.classList.remove('visible');
           this.$.text.classList.remove('visible');
         }
-        /*this.toggleClass('hidden' , !visible, this.$.canvas);
-        this.toggleClass('hidden' , !visible, this.$.text);
-        this.toggleClass('visible',  visible, this.$.canvas);
-        this.toggleClass('visible',  visible, this.$.text);*/
       }
 
       /**
@@ -270,6 +261,12 @@
         this._ctx.arcTo(  x    , y    , x + r    , y        , r);
       }
 
+      /**
+       * Paints the balloon shape on the canvas object
+       *
+       * @param {number} width width in pixels of the balloon
+       * @param {number} height height in pixels of the balloon
+       */
       _paintBalloon (width, height) {
         var tipLocation, tipHeight, tipBase, radius;
 

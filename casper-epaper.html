@@ -2233,85 +2233,105 @@
 
       documentHandler (a_message) {
         switch (a_message[0]) {
-          case 'S':
-            if ( a_message.indexOf('S:ok:data:') === 0 ) {
-              if ( this._getDataCallback !== undefined ) {
-                this._getDataCallback(a_message.substring('S:ok:data:'.length));
-                this._getDataCallback = undefined;
-              }
-            } else {
-              this._request_callback(a_message);
-            }
-            break;
+          //case 'S':
+          //  if ( a_message.indexOf('S:ok:data:') === 0 ) {
+          //    if ( this._getDataCallback !== undefined ) {
+          //      this._getDataCallback(a_message.substring('S:ok:data:'.length));
+          //      this._getDataCallback = undefined;
+          //    }
+          //  } else {
+          //    this._request_callback(a_message);
+          //  }
+          //  break;
 
-          case 'N':
-            var message = a_message.substring(2);
-
-            if ( message.startsWith('update:focus,forward') ) {
-              if ( this.nextChapter() ) {
+          case 'n':
+            const notification = JSON.parse(a_message.substring(2));
+            
+            if ( notification.focus ) {
+              if ( notification.focus === 'forward' ) {
+                this.nextChapter();
                 return;
               }
-            } else if ( message.startsWith('update:focus,backward') ) {
-              if ( this.previousChapter() ) {
+              if ( notification.focus === 'backwards' ) {
+                this.previousChapter();
                 return;
               }
-            } else if (message.startsWith('update:variable,PAGE_COUNT,')) {
-              var pageCount;
-
-              pageCount = parseInt(message.substring('update:variable,PAGE_COUNT,'.length));
-              this._updatePageCount(this._chapterIndex, pageCount);
-              return;
-
-            } else if (message.startsWith('update:variable,PAGE_NUMBER,')) {
-              var pageNumber;
-
-              pageNumber = parseInt(message.substring('update:variable,PAGE_NUMBER,'.length));
-              this._updatePageNumber(pageNumber);
-              return;
             }
-            this._fireEvent('casper-epaper-notification', { message: message });
-            break;
-
-          case 'E':
-
-            this._r_idx   = 1;
-            this._message = a_message;
-
-            var w = this._getDouble();
-            var k = this._message.substring(this._r_idx, this._r_idx + w);
-            this._r_idx += w + 1; // +1 -> ','
-
-                w = this._getDouble();
-            var t = this._message.substring(this._r_idx, this._r_idx + w);
-            this._r_idx += w + 1; // +1 -> ','
-
-                w = this._getDouble();
-            var m = this._message.substring(this._r_idx, this._r_idx + w);
-            this._r_idx += w + 1; // +1 -> ','
-
-            if ( this._message[this._r_idx - 1] != ';' ) {
-              console.log("command is not terminated ...");
+            if ( notification.variables ) {
+              if ( notification.variables.PAGE_COUNT ) {
+                this._updatePageCount(this._chapterIndex, notification.variables.PAGE_COUNT); 
+              }
+              if ( notification.variables.PAGE_NUMBER ) {
+                this._updatePageNumber(notification.variables.PAGE_NUMBER);
+              }
             }
+            //var message = a_message.substring(2);
 
-            //if ( undefined !== this._listener && undefined !== this._listener.on_error_received ) {
-            //  this._listener.on_error_received(t, m);
+            //if ( message.startsWith('update:focus,forward') ) {
+            //  if ( this.nextChapter() ) {
+            //    return;
+            //  }
+            //} else if ( message.startsWith('update:focus,backward') ) {
+            //  if ( this.previousChapter() ) {
+            //    return;
+            //  }
+            //} else if (message.startsWith('update:variable,PAGE_COUNT,')) {
+            //  var pageCount;
+//
+            //  pageCount = parseInt(message.substring('update:variable,PAGE_COUNT,'.length));
+            //  this._updatePageCount(this._chapterIndex, pageCount);
+            //  return;
+//
+            //} else if (message.startsWith('update:variable,PAGE_NUMBER,')) {
+            //  var pageNumber;
+//
+            //  pageNumber = parseInt(message.substring('update:variable,PAGE_NUMBER,'.length));
+            //  this._updatePageNumber(pageNumber);
+            //  return;
             //}
-            var errorDetail = undefined;
-            if ( m.indexOf('S:failure:load:') === 0 ) {
-              error = JSON.parse(m.replace('S:failure:load:',''));
-              errorDetail = error.errors.first();
-            } else if ( m.indexOf('S:failure:pdf:') === 0 ) {
-              error = JSON.parse(m.replace('S:failure:pdf:',''));
-              errorDetail = error.errors.first();
-            } else if ( m !== undefined && m.length !== 0 ) {
-              errorDetail = m;
-            }
-
-            if ( errorDetail !== undefined ) {
-              this._fireEvent('casper-epaper-error', errorDetail);
-            }
-
+            //this._fireEvent('casper-epaper-notification', { message: message });
             break;
+
+          //case 'E':
+//
+          //  this._r_idx   = 1;
+          //  this._message = a_message;
+//
+          //  var w = this._getDouble();
+          //  var k = this._message.substring(this._r_idx, this._r_idx + w);
+          //  this._r_idx += w + 1; // +1 -> ','
+//
+          //      w = this._getDouble();
+          //  var t = this._message.substring(this._r_idx, this._r_idx + w);
+          //  this._r_idx += w + 1; // +1 -> ','
+//
+          //      w = this._getDouble();
+          //  var m = this._message.substring(this._r_idx, this._r_idx + w);
+          //  this._r_idx += w + 1; // +1 -> ','
+//
+          //  if ( this._message[this._r_idx - 1] != ';' ) {
+          //    console.log("command is not terminated ...");
+          //  }
+//
+          //  //if ( undefined !== this._listener && undefined !== this._listener.on_error_received ) {
+          //  //  this._listener.on_error_received(t, m);
+          //  //}
+          //  var errorDetail = undefined;
+          //  if ( m.indexOf('S:failure:load:') === 0 ) {
+          //    error = JSON.parse(m.replace('S:failure:load:',''));
+          //    errorDetail = error.errors.first();
+          //  } else if ( m.indexOf('S:failure:pdf:') === 0 ) {
+          //    error = JSON.parse(m.replace('S:failure:pdf:',''));
+          //    errorDetail = error.errors.first();
+          //  } else if ( m !== undefined && m.length !== 0 ) {
+          //    errorDetail = m;
+          //  }
+//
+          //  if ( errorDetail !== undefined ) {
+          //    this._fireEvent('casper-epaper-error', errorDetail);
+          //  }
+//
+          //  break;
 
           case 'D':
             this._onPaintMessage(a_message);

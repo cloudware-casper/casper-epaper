@@ -780,18 +780,18 @@
 
       _onKeyDownR (event) {
         if ( event.keyCode === 32 || (event.keyCode === 88 && this._textArea.value.length === 0) ) {
-          this.debounce('casper-toggle', function () {
-            this.epaper._sendCommand('set key "toggle";');
-          }.bind(this), 300);
+          // TODO debouncer this.debounce('casper-toggle', function () {
+            this.epaper.socket.sendKey(this.epaper._documentId, 'toggle');
+          //}.bind(this), 300);
         } else {
           var vkey = this._keycodeToVkey(event);
 
           if ( ['down', 'up', 'left', 'right'].indexOf(vkey) > -1 ) {
-            this.epaper._sendCommand('set key "focus_'+vkey+'";');
+            this.epaper.socket.moveCursor(this.epaper._documentId, vkey);
           } else if ( vkey === 'shift+tab' ) {
-            this.epaper._sendCommand('set key "focus_left";');
+            this.epaper.socket.moveCursor(this.epaper._documentId, 'left');
           } else if ( vkey === 'enter' || vkey === 'tab' ) {
-            this.epaper._sendCommand('set key "focus_right";');
+            this.epaper.socket.moveCursor(this.epaper._documentId, 'right');
           }
         }
         event.preventDefault();
@@ -889,7 +889,7 @@
       _onMouseDown (event) {
         if ( this._mode === 'R' ) {
           event.preventDefault();
-          this.epaper._sendCommand('set key "toggle";'); 
+          this.epaper.socket.sendKey(this.epaper._documentId, 'toggle');
         } else {
           this._initialSelection = false;
           this.grabFocus();

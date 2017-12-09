@@ -413,7 +413,7 @@
               if ( i === this._chapterIndex ) {
                 if ( this._chapterPageNumber !== newPageNumber ) {
                   this._resetScroll();
-                  this._sendCommand('document set page ' + newPageNumber + ';');
+                  this.socket.gotoPage(this._documentId, newPageNumber);
                 }
               } else {
                 this.gotoChapter(i, newPageNumber);
@@ -2060,35 +2060,33 @@
 
       _addDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
-          this._sendCommand('document add band "' + this._bands[this._context_menu_idx]._type +
-                                    '" ' + this._bands[this._context_menu_idx]._id + ';',
-                            function (a_msg) {
-                              if ( a_msg === 'S:ok:parser' ) {
-                                // Start animation
-                              } else if ( a_msg.indexOf('S:ok:band add') === 0 ) {
-                                // All done
-                              } else {
-                                // error
-                                console.log('=== add_line failed: a_msg');
-                              }
-                            });
+          this.socket.addBand(this._documentId, 
+                              this._bands[this._context_menu_idx]._type,  
+                              this._bands[this._context_menu_idx]._id,
+                              this._addDocumentLineResponse.bind(this));
+        }
+      }
+
+      _addDocumentLineResponse (x) {
+        if ( x.errors ) {
+          // @TODO error handling and cursors
+          console.log(x.errors[0].internal.why);
         }
       }
 
       _removeDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
-          this._sendCommand('document remove band "' + this._bands[this._context_menu_idx]._type +
-                                    '" ' + this._bands[this._context_menu_idx]._id + ';',
-                            function (a_msg) {
-                              if ( a_msg === 'S:ok:parser' ) {
-                                // Start animation
-                              } else if ( a_msg.indexOf('S:ok:band remove') === 0 ) {
-                                // All done
-                              } else {
-                                // error
-                                console.log('=== remove_line failed: a_msg');
-                              }
-                            });
+          this.socket.deleteBand(this._documentId, 
+                                 this._bands[this._context_menu_idx]._type,  
+                                 this._bands[this._context_menu_idx]._id,
+                                 this._removeDocumentLineResponse.bind(this));            
+        }
+      }
+
+      _removeDocumentLineResponse (x) {
+        if ( x.errors ) {
+          // @TODO error handling and cursors
+          console.log(x.errors[0].internal.why);
         }
       }
 

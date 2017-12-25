@@ -231,19 +231,11 @@
 
       connectedCallback () {
         super.connectedCallback();
-        // @TODO port to 2.0
-        //this.listen(this.$.canvas, 'mousemove', '_moveHandler');
-        //this.listen(this.$.canvas, 'mousedown', '_mouseDownHandler');
-        //this.listen(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
         this._deactivateLineContextMenu();
       }
 
       disconnectedCallback () {
         super.disconnectedCallback();
-        // @TODO port to 2.0
-        //this.unlisten(this.$.canvas, 'mousemove', '_moveHandler');
-        //this.unlisten(this.$.canvas, 'mousedown', '_mouseDownHandler');
-        //this.unlisten(this.$.canvas, 'mouseup'  , '_mouseUpHandler');
       }
 
       isPrintableDocument () {

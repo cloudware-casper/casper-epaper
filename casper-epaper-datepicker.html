@@ -60,7 +60,7 @@
       ready () {
         super.ready();
         //this.$.picker._input = inputBridge.bind(this);
-        this.$.picker.$.dropdown.noOverlap = true;
+        //this.$.picker.$.dropdown.noOverlap = true;
       }
 
       connectedCallback () {
@@ -101,7 +101,7 @@
         moment.locale(isoCountryCode || 'pt');
         this.$.picker.i18n = {
             monthNames: moment.months(),
-            weekdays: moment.weekdays(), 
+            weekdays: moment.weekdays(),
             weekdaysShort: moment.weekdaysShort(),
             firstDayOfWeek: moment.localeData().firstDayOfWeek(),
             today: 'hoje',

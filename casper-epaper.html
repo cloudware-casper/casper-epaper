@@ -2338,7 +2338,9 @@
           window.parent.document.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
         } else {
           // @TODO remove legacy API
-          this.fire(eventName, eventData);
+          if ( undefined !== this.fire ) {
+            this.fire(eventName, eventData);
+          }
         }
       }
 

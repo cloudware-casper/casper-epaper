@@ -11,7 +11,8 @@
     "paper-card": "PolymerElements/paper-card#^2.0.0",
     "paper-spinner": "PolymerElements/paper-spinner#^2.0.0",
     "iron-demo-helpers": "^2.0.0",
-    "vaadin-date-picker": "^3.0.0-alpha5"
+    "vaadin-date-picker": "^3.0.0-alpha5",
+    "iron-dropdown": "^2.1.0"
   },
   "devDependencies": {}
 }

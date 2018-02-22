@@ -248,6 +248,32 @@
       //                                                                                       //
       //***************************************************************************************//
 
+      openPdf (pdfUrl) {
+        this._pdfUrl = pdfUrl;
+        if ( window.PDFJS === undefined ) {
+          Polymer.importHref(this.resolveUrl('casper-pdfjs.html'),
+                             this._onPdfjsLoaded.bind(this),                         // success callback
+                             null, // TODO error // error callback
+                             true);          
+        } else {
+          this._onPdfjsLoaded(this._pdfUrl);
+        }
+      }
+
+      _onPdfjsLoaded (foo) {
+        PDFJS.getDocument(this._pdfUrl).then(function(pdf) {
+          pdf.getPage(1).then(function(page) {
+            let viewport = page.getViewport(this.zoom * this._ratio);
+            let context  = this.$.canvas.getContext('2d');
+            var renderContext = {
+              canvasContext: context,
+              viewport: viewport
+            };
+            page.render(renderContext);
+          }.bind(this));
+        }.bind(this));
+      }
+
       /**
        * Open server document
        *

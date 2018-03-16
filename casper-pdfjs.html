@@ -2,17 +2,9 @@
 
 <script src="../pdfjs-dist/build/pdf.min.js"></script>
 
-<dom-module id="casper-pdfjs">
+<!--dom-module id="casper-pdfjs"-->
 
-  <script>
-
-    class CasperPdfjs extends HTMLElement {
-
-      static get is () {
-        return 'casper-pdfjs';
-      }
-    }
-
-    window.customElements.define(CasperPdfjs.is, CasperPdfjs);
-  </script>
-</dom-module>
+<script>
+  window.PDFJS = pdfjsDistBuildPdf;
+</script>
+<!--/dom-module-->

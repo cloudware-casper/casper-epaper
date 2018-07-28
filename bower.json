@@ -15,7 +15,8 @@
     "pdfjs-dist": "^2.0.389",
     "vaadin-date-picker": "^2.0.7",
     "casper-icons": "casper2020/casper-icons#^0.2.1",
-    "casper-common-ui": "casper2020/casper-common-ui#^3.0.2"
+    "casper-common-ui": "casper2020/casper-common-ui#^3.0.2",
+    "casper-socket": "casper2020/casper-socket#^0.1.9"
   },
   "devDependencies": {}
 }

@@ -254,7 +254,7 @@
           Polymer.importHref(this.resolveUrl('casper-pdfjs.html'),
                              this._onPdfjsLoaded.bind(this),                         // success callback
                              null, // TODO error // error callback
-                             true);          
+                             true);
         } else {
           this._onPdfjsLoaded(this._pdfUrl);
         }
@@ -481,7 +481,7 @@
         this._fireEvent('casper-epaper-notification', { message: 'update:variable,PAGE_NUMBER,1;' });
         this._document = undefined;
         this._callRpc('close', 'document close "' + this._documentId  + '";', function(a_epaper, a_message) {
-            var expected_response = 'S:ok:close:' + a_epaper._documentId; 
+            var expected_response = 'S:ok:close:' + a_epaper._documentId;
             if ( a_message.indexOf(expected_response) === 0 ) {
               if ( a_message.length > expected_response.length ) {
                 a_epaper._documentId  = a_message.substring(expected_response.length + 1).replace('\n', '');
@@ -883,7 +883,7 @@
 
       _mouseUpHandler (a_event) {
         this.socket.sendClick(this._documentId,
-                              parseFloat((event.offsetX * this._scalePxToServer).toFixed(2)), 
+                              parseFloat((event.offsetX * this._scalePxToServer).toFixed(2)),
                               parseFloat((event.offsetY * this._scalePxToServer).toFixed(2)));
         if ( this._edition ) {
           this.$.input.grabFocus();
@@ -1963,7 +1963,7 @@
       /**
        * Adjust the canvas dimension taking into account the pixel ratio
        *
-       * Also calculates the scale the server should
+       * Also calculates the scale the server should use
        */
       _setupScale () {
         this._canvas.width  = this._canvas_width  * this._ratio;
@@ -2078,8 +2078,8 @@
 
       _addDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
-          this.socket.addBand(this._documentId, 
-                              this._bands[this._context_menu_idx]._type,  
+          this.socket.addBand(this._documentId,
+                              this._bands[this._context_menu_idx]._type,
                               this._bands[this._context_menu_idx]._id,
                               this._addDocumentLineResponse.bind(this));
         }
@@ -2094,10 +2094,10 @@
 
       _removeDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
-          this.socket.deleteBand(this._documentId, 
-                                 this._bands[this._context_menu_idx]._type,  
+          this.socket.deleteBand(this._documentId,
+                                 this._bands[this._context_menu_idx]._type,
                                  this._bands[this._context_menu_idx]._id,
-                                 this._removeDocumentLineResponse.bind(this));            
+                                 this._removeDocumentLineResponse.bind(this));
         }
       }
 
@@ -2262,7 +2262,7 @@
 
           case 'n':
             const notification = JSON.parse(a_message.substring(2));
-            
+
             if ( notification.focus ) {
               if ( notification.focus === 'forward' ) {
                 this.nextChapter();
@@ -2275,7 +2275,7 @@
             }
             if ( notification.variables ) {
               if ( notification.variables.PAGE_COUNT ) {
-                this._updatePageCount(this._chapterIndex, notification.variables.PAGE_COUNT); 
+                this._updatePageCount(this._chapterIndex, notification.variables.PAGE_COUNT);
               }
               if ( notification.variables.PAGE_NUMBER ) {
                 this._updatePageNumber(notification.variables.PAGE_NUMBER);

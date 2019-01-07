@@ -1,20 +1,20 @@
 <!--
   - Copyright (c) 2016 Cloudware S.A. All rights reserved.
   -
-  - This file is part of casper-combolist.
+  - This file is part of casper-epaper.
   -
-  - casper-combolist is free software: you can redistribute it and/or modify
+  - casper-epaper is free software: you can redistribute it and/or modify
   - it under the terms of the GNU Affero General Public License as published by
   - the Free Software Foundation, either version 3 of the License, or
   - (at your option) any later version.
   -
-  - casper-combolist  is distributed in the hope that it will be useful,
+  - casper-epaper  is distributed in the hope that it will be useful,
   - but WITHOUT ANY WARRANTY; without even the implied warranty of
   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   - GNU General Public License for more details.
   -
   - You should have received a copy of the GNU Affero General Public License
-  - along with casper-combolist.  If not, see <http://www.gnu.org/licenses/>.
+  - along with casper-epaper.  If not, see <http://www.gnu.org/licenses/>.
   -
  -->
 
@@ -23,9 +23,9 @@
 <link rel="import" href="../iron-input/iron-input.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../casper-icons/casper-icons.html">
-<link rel="import" href="casper-epaper-tooltip.html">
+<!--link rel="import" href="casper-epaper-tooltip.html"-->
 <link rel="import" href="casper-epaper-datepicker.html">
-<link rel="import" href="casper-epaper-combolist.html">
+<!--link rel="import" href="casper-epaper-combolist.html"-->
 
 <!--
 `casper-epaper-input` customised input component that overlays the rendering canvas
@@ -37,7 +37,7 @@
         display: none;
         position: absolute;
       }
-  
+
       iron-icon {
         position: absolute;
         cursor: pointer;
@@ -46,23 +46,23 @@
         transition: transform 300ms;
         fill: var(--dark-theme-background-color);
       }
-  
+
       iron-icon[rotate] {
         transform: rotate(180deg);
       }
-  
+
       iron-icon:hover {
         fill: var(--primary-color);
       }
-  
+
       ::-ms-clear {
         display: none;
       }
-  
+
       ::selection {
-        background: #d0ecf0; 
+        background: #d0ecf0;
       }
-  
+
       #textarea {
         border: none;
         display: block;
@@ -70,48 +70,48 @@
         padding: 0px;
         margin: 0px;
         outline: none;
-        background-color: rgba(0, 0, 0, 0); 
+        background-color: rgba(0, 0, 0, 0);
       }
-  
+
       #clear_btn {
         stroke: #D0011B;
         stroke-width: 1.5;
         fill: #EE9392;
-        fill-opacity: 0.55; 
+        fill-opacity: 0.55;
       }
-  
+
       #clear_btn:hover {
         stroke: #555;
         stroke-width: 2.5;
-        fill-opacity: 0.9; 
+        fill-opacity: 0.9;
       }
-  
+
       #clear_btn:active {
         stroke: #555;
         stroke-width: 2.5;
         fill: #B94F4F;
-        fill-opacity: 1; 
+        fill-opacity: 1;
       }
-  
+
       #edit_btn {
         fill: var(--dark-primary-color);
       }
-  
+
       #edit_btn:hover {
         fill: var(--primary-color);
       }
-  
+
 /*    #input {
         -ms-overflow-style: -ms-autohiding-scrollbar;
       }
-  
+
       #textarea {
         resize: none;
-        background-color: rgba(0, 0, 0, 0); 
+        background-color: rgba(0, 0, 0, 0);
         border-color: rgba(0, 0, 0, 0);
         overflow: auto;
       }*/
-  
+
     </style>
     <!--div id="input"-->
     <input is="iron-input" id="textarea">
@@ -131,7 +131,7 @@
       static get is () {
         return 'casper-epaper-input';
       }
-        
+
       static get properties () {
         return {
           /** True when there is an open overlay */
@@ -154,7 +154,7 @@
         this.$.date.inputBox = this.$.textarea;//this.$.input.$.textarea;
         this._visible        = true;
         this.setVisible(false);
-        this.$.combo.setPositionTarget(this);
+        // TODO this.$.combo.setPositionTarget(this);
 
         this.addEventListener('keypress' , e => this._onKeypress(e));
         this.addEventListener('keydown'  , e => this._onKeyDown(e));
@@ -236,7 +236,7 @@
        */
       alignStyle (a_text_left, a_baseline) {
 
-        // Make baseline and edge relative to input pox 
+        // Make baseline and edge relative to input pox
         var ratio = this.epaper._ratio;
         var tl    = a_text_left / ratio - this._x;
         var bl    = a_baseline  / ratio - this._y;
@@ -244,8 +244,8 @@
 
         /*console.log(' ==> tl=' + tl + ' bl=' + bl + ' top=' + top);*/
 
-        //this._textArea.style.padding     = '0px'; 
-        //this._textArea.style.margin      = '0px'; 
+        //this._textArea.style.padding     = '0px';
+        //this._textArea.style.margin      = '0px';
         this._textArea.style.marginLeft  = Math.max(tl,1) + 'px';
         this._textArea.style.marginRight = Math.max(tl,1) + 'px';
         //this._textArea.style.marginTop   = Math.max(bl + top, 1) + 'px';
@@ -256,7 +256,7 @@
 
       hideOverlays (hideButtons) {
         this.hideTooltip();
-        this.$.combo.setVisible(false);
+        // TODO this.$.combo.setVisible(false);
         this.$.date.setVisible(false);
         if ( hideButtons ) {
           this.$.dropdown_btn.style.display = 'none';
@@ -281,7 +281,7 @@
               this.setMode('n');
               break;
           }
-          this.$.combo.setCasperBinding(binding);
+          // TODO this.$.combo.setCasperBinding(binding);
           this.setCombolistQuery(binding.attachment.route);
           if ( binding.hint && binding.hint.expression && binding.hint.expression.length ) {
             this.showTooltip(binding.hint.expression);
@@ -289,7 +289,7 @@
             this.hideTooltip();
           }
         } else {
-          this.$.combo.setCasperBinding(undefined);
+          // TODO this.$.combo.setCasperBinding(undefined);
           this.setCombolistQuery(undefined);
         }
       }
@@ -308,11 +308,11 @@
         switch ( a_mode ) {
         case 'c': // Client combo
           this._textArea.style.cursor = 'pointer';
-          this._setOverlay(this.$.combo);
+          // TODO this._setOverlay(this.$.combo);
           break;
         case 'l': // Ledger mode
           this._textArea.style.cursor = 'text';
-          this._setOverlay(this.$.combo);
+          // TODO this._setOverlay(this.$.combo);
           break;
         case 'd': // Date
           this._textArea.style.cursor = 'text';
@@ -329,7 +329,7 @@
           break;
         }
 
-        btn_size = Math.floor(12 * this.epaper.zoom); 
+        btn_size = Math.floor(12 * this.epaper.zoom);
         width    = parseInt(this.style.width);
         height   = parseInt(this.style.height);
 
@@ -347,7 +347,7 @@
         this.$.clear_btn.style.top     = ((height - btn_size) / 2) + 'px';
         this.$.clear_btn.style.left    = (width - btn_size) + 'px';
 
-        edit_btn_size = Math.floor(18 * this.epaper.zoom); 
+        edit_btn_size = Math.floor(18 * this.epaper.zoom);
         this.$.edit_btn.style.display = 'none'; // 'inline';
         this.$.edit_btn.style.padding = '0px';
         this.$.edit_btn.style.height  = edit_btn_size + 'px';
@@ -382,7 +382,7 @@
        * @param a_display_fields array of fields names
        */
       setDisplayFields (a_fields) {
-        this.$.combo.setDisplayFields(a_fields);
+        // TODO this.$.combo.setDisplayFields(a_fields);
       }
 
       /**
@@ -397,9 +397,9 @@
        */
       setModelFromJson (combo_id, json) {
         this._comboListQuery = undefined;
-        this.$.combo.$.spinner.active = false;
-        this.$.combo.showFab = false;
-        return this.$.combo.setModelFromJson(combo_id, json);
+        // TODO this.$.combo.$.spinner.active = false;
+        // TODO this.$.combo.showFab = false;
+        // TODO return this.$.combo.setModelFromJson(combo_id, json);
       }
 
       setCombolistQuery (query) {
@@ -407,15 +407,15 @@
         this._textArea.value = '';
         this._textArea.selectionStart = undefined;
         this._textArea.selectionEnd = undefined;
-        this.$.combo.clearModel();
-        this.$.combo.$.spinner.active = true;
+        // TODO this.$.combo.clearModel();
+        // TODO this.$.combo.$.spinner.active = true;
       }
 
       onGetDataResponse (jsonapi) {
-        this.$.combo.$.spinner.active = false;
-        this.$.combo.setModelFromJsonApi(jsonapi);
+        // TODO this.$.combo.$.spinner.active = false;
+        // TODO this.$.combo.setModelFromJsonApi(jsonapi);
         this._layoutComboList();
-        this.$.combo.$.dialog.fire('iron-overlay-opened');
+        // TODO this.$.combo.$.dialog.fire('iron-overlay-opened');
       }
 
       _setOverlay (overlay) {
@@ -480,10 +480,11 @@
           max_width = this.epaper._page_width * this.epaper._sx - page_margin - left;
         }
 
+        /* TODO
         this.$.combo.autoSize(width, max_width);
         if ( ! this.$.combo.isVisible() && this._overlay === this.$.combo ) {
           this.$.combo.setVisible(true, this._comboFilter);
-        }
+        } */
       }
 
       setValue (value, displayValue) {
@@ -605,9 +606,9 @@
         }
 
         if ( ['enter', 'tab', 'shift+tab'].indexOf(vkey) > -1 ) {
-          this.epaper.socket.setText(this.epaper._documentId, 
-                                     this._textArea.value, 
-                                     vkey === 'shift+tab' ? 'left' : 'right', 
+          this.epaper.socket.setText(this.epaper._documentId,
+                                     this._textArea.value,
+                                     vkey === 'shift+tab' ? 'left' : 'right',
                                      this._setTextResponse.bind(this));
           event.preventDefault();
           return;
@@ -625,12 +626,13 @@
       /*****************************************************************************************/
 
       _setValueC (id, displayValue) {
+        /*  TODO
         this.$.combo.setVisible(false);
         if ( id !== undefined && id.length > 0 ) {
           this.$.combo.selectById(id);
         } else {
           this._textArea.value = '';
-        }
+        }*/
         this.overlayVisible = false;
         this._textArea.selectionStart = undefined;
         this._textArea.selectionEnd = undefined;
@@ -667,21 +669,23 @@
       }
 
       _onKeyDownC (event) {
-        var vkey;
+        let vkey;
 
         vkey = this._keycodeToVkey(event);
         if ( this.overlayVisible === false ) {
           if ( ['down', 'up', 'left', 'right'].indexOf(vkey) > -1 ) {
             if ( this._comboFilter.length !== 0 && ['down', 'up'].indexOf(vkey) > -1) {
-              this.$.combo.moveSelection(vkey);
+              /* TODO this.$.combo.moveSelection(vkey); */
             } else {
               this.epaper.socket.moveCursor(this.epaper._documentId, vkey);
             }
             event.preventDefault();
           } else if ( ['tab', 'shift+tab', 'enter'].indexOf(vkey) > -1 ) {
+            /*
+            TODO
             if ( this.$.combo.getSelectedId() && this.$.combo.getSelectedId() !== this.$.combo.getInitialId() ) {
             //  this.epaper._sendCommand('set list item "' + this.$.combo.getSelectedId()  + '";');
-            }
+            }*/
             this.epaper._sendCommand('set key "'+vkey.replace(/\+/g, '"+"')+'";');
             event.preventDefault();
           } else if ( vkey === 'alt' || vkey === 'shift+down' ) {
@@ -695,7 +699,7 @@
           //}
         } else {
           if ( vkey === 'esc' ) {
-            this.$.combo.setVisible(false);
+            // TODO this.$.combo.setVisible(false);
             this.overlayVisible = false;
             event.preventDefault();
           }
@@ -926,7 +930,7 @@
 
         bbc = this.epaper.$.canvas.getBoundingClientRect();
         if ( this.$.input === undefined ) {
-          return; // TODO 
+          return; // TODO
         }
         bbi = this.$.input.getBoundingClientRect();
         mid_x = bbc.left + left + width  / 2;
@@ -937,19 +941,22 @@
           return;
         }
         if ( content.length ) {
-          this.epaper.$.tooltip.show(content);
+          console.log('Show tooltip:', content); // TODO port to casper-app
+          //this.epaper.$.tooltip.show(content); // TODO port to casper-app
         } else {
           this.hideTooltip();
         }
       }
 
       showTooltip (content, positionTarget) {
-        this.epaper.$.tooltip.show(content, positionTarget);
+        console.log('Show tooltip:', content); // TODO port to casper-app
+        //this.epaper.$.tooltip.show(content, positionTarget);
       }
 
       hideTooltip () {
         if ( this.epaper.$.tooltip.hide !== undefined ) {
-          this.epaper.$.tooltip.hide();
+          console.log('Hide tooltip:'); // TODO port to casper-app
+          //this.epaper.$.tooltip.hide();
         }
       }
 

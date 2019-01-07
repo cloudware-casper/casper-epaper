@@ -22,9 +22,9 @@
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../casper-icons/casper-icons.html">
-<link rel="import" href="../casper-common-ui/casper-i18n-behavior.html">
+<!--link rel="import" href="../casper-common-ui/casper-i18n-behavior.html"-->
 <link rel="import" href="casper-epaper-imports.html">
-<link rel="import" href="casper-epaper-tooltip.html">
+<!--link rel="import" href="casper-epaper-tooltip.html"-->
 <link rel="import" href="casper-epaper-input.html">
 <link rel="import" href="casper-epaper-servertip-helper.html">
 
@@ -151,7 +151,6 @@
 
       ready () {
         super.ready ();
-        window.ep = this; // TODO MARTELADA
         this._socket            = this.socket;
         this._canvas            = this.$.canvas;
         this._canvas_width      = this._canvas.width;
@@ -171,6 +170,7 @@
         this._images            = {};
         this._focused_band_id   = undefined;
         this._redraw_timer_key  = '_epaper_redraw_timer_key';
+        this._uploaded_assets_url = '';
         this._resetRenderState();
         this._resetCommandData();
 
@@ -210,13 +210,13 @@
         this._setupScale();
 
         // ... FOUT Mitigation @TODO proper FOUT mitigation ...
-        var styles    = ['', 'bold ', 'italic ', 'italic bold '];
-        var y = 175;
+        let styles    = ['', 'bold ', 'italic ', 'italic bold '];
+        let y = 175;
         this._ctx.save();
         this._ctx.fillStyle = "#F0F0F0"
         this._ctx.textAlign="center";
         this._font_spec[CasperEpaper.SIZE_INDEX] = 20;
-        for ( var i = 0; i < styles.length; i++ ) {
+        for ( let i = 0; i < styles.length; i++ ) {
           this._font_spec[CasperEpaper.BOLD_INDEX] = styles[i];
           this._ctx.font = this._font_spec.join('');
           this._ctx.fillText("Powered by CASPER ePaper", this._canvas.width / 2, y);
@@ -883,8 +883,8 @@
 
       _mouseUpHandler (a_event) {
         this.socket.sendClick(this._documentId,
-                              parseFloat((event.offsetX * this._scalePxToServer).toFixed(2)),
-                              parseFloat((event.offsetY * this._scalePxToServer).toFixed(2)));
+                              parseFloat((a_event.offsetX * this._scalePxToServer).toFixed(2)),
+                              parseFloat((a_event.offsetY * this._scalePxToServer).toFixed(2)));
         if ( this._edition ) {
           this.$.input.grabFocus();
         }
@@ -938,16 +938,16 @@
         this._ctx.strokeStyle = "#000000";
       }
 
-      _getDouble() {
+      _getDouble () {
 
-        var fractional    = 0.0;
-        var whole         = 0.0;
-        var negative      = false;
-        var parsing_whole = true;
-        var divider       = 1.0;
-        var current_c     = "";
+        let fractional    = 0.0;
+        let whole         = 0.0;
+        let negative      = false;
+        let parsing_whole = true;
+        let divider       = 1.0;
+        let current_c     = "";
 
-        if (this._message[this._r_idx] == '-') {
+        if ( this._message[this._r_idx] === '-' ) {
           negative = true;
           this._r_idx++;
         }
@@ -989,6 +989,13 @@
               return NaN;
           }
         }
+      }
+
+      _getString () {
+        let l = this._getDouble();
+        let s  = this._r_idx;
+        this._r_idx += l + 1;
+        return this._message.substring(s, s + l);
       }
 
       _onPaintMessage (a_message) {
@@ -1816,50 +1823,46 @@
               break;
 
             /*
-             * === 'I' Image : I<url_chars_count>,<url>,<x>,<y>,<w>,<h>
-             * === 'I' Image : I<url_chars_count>,<url>,<x>,<y>,<w>,<h>,<sx>,<sy>,<sw>,<sh>
+             * === 'I' Image : I<id>,<url_chars_count>,<url>,<x>,<y>,<w>,<h>
+             * === 'I' Image : I<id>,<url_chars_count>,<url>,<x>,<y>,<w>,<h>,<sx>,<sy>,<sw>,<sh>
              */
             case 'I':
 
-              w = this._getDouble();
-              this._t = this._message.substring(this._r_idx, this._r_idx + w);
-              this._r_idx += w + 1;
+              let img_info = {
+                _id:   this._getDouble(),
+                _path: this._getString(),
+                _t:    this._getDouble(),
+                _l:    this._getDouble(),
+                _b:    this._getDouble(),
+                _r:    this._getDouble(),
+                _m:    this._getString(),
+                _h:    this._getString(),
+                _v:    this._getString()
+              };
 
-              x = this._getDouble();
-              y = this._getDouble();
-              w = this._getDouble();
-              h = this._getDouble();
-              if ( this._message[this._r_idx - 1] != ';' ) {
-                sx = this._getDouble();
-                sy = this._getDouble();
-                sw = this._getDouble();
-                sh = this._getDouble();
-              } else {
-                sx = -1.0;
-              }
-              var img = this._images[this._t];
-              if ( img === undefined ) {
-                var self = this;
+              let img = this._images[img_info._id];
+              if ( img === undefined && img_info._path.length ) {
                 img = new Image();
+                if ( false) {  // Image scaling QA
+                  document.getElementById('epaper-container').appendChild(img);
+                  img.style.display = 'none';
+                  img.id = img_info._id;
+                }
+                this._images[img_info._id] = img;
                 img.onload = function() {
-                  self.restart_redraw_timer();
-                }
+                  this._restart_redraw_timer();
+                }.bind(this);
                 img.onerror = function() {
-                  self._images[this.src] = undefined;
-                }
-                img.src = this._t;
-                this._images[this._t] = img;
+                  this._images[img_info._id] = undefined;
+                }.bind(this);
+                img.src = this._uploaded_assets_url + img_info._path;
+                this._images[img_info._id] = img;
               }
-              if ( img.complete && typeof img.naturalWidth !== undefined && img.naturalWidth !== 0 ) {
+              if ( img && img.complete && typeof img.naturalWidth !== undefined && img.naturalWidth !== 0 ) {
                 try {
-                  if ( sx !== -1.0 ) {
-                    this._ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-                  } else {
-                    this._ctx.drawImage(img, x, y, w, h);
-                    //console.log("=== Draw image @" + x + "," + y + " " + w + "x" + h);
-                    //this._ctx.drawImage(this.step_down(img, w,h), x, y, w, h);
-                  }
+                  this._scale_image(img_info, img);
                 } catch (a_err) {
+                  console.log(a_err);
                   // Keep the faulty image in the cache to avoid bombarding the server with broken requests
                 }
               }
@@ -2020,6 +2023,117 @@
         if ( window[this._redraw_timer_key] !== undefined ) {
           window.clearTimeout(window[this._redraw_timer_key]);
           window[this._redraw_timer_key] = undefined;
+        }
+      }
+
+      _scale_image (img_info, img) {
+        let max_image_width  = img_info._r - img_info._l;
+        let max_image_height = img_info._b - img_info._t;
+
+        let s_x = -1;
+        let s_y = -1;
+        let s_w = img.naturalWidth;
+        let s_h = img.naturalHeight;
+
+        let f_x = 1;
+        let f_y = 1;
+        let t_w = max_image_width;
+        let t_h = max_image_height;
+
+        // calculate scale to apply
+        switch(img_info._m) {
+          case 'CL':
+            // Only the portion of the image that fits the specified object width and height will be printed. Image is not stretched.
+            t_w = Math.min(max_image_width, img.naturalWidth);
+            t_h = Math.min(max_image_height, img.naturalHeight);
+            s_w = t_w;
+            s_h = t_h;
+            break;
+
+          case 'FF':
+            // Image will be stretched to adapt to the specified object width and height.
+            f_x = max_image_width / img.naturalWidth;
+            f_y = max_image_height / img.naturalHeight;
+            t_w /= f_x;
+            t_h /= f_y;
+            break;
+
+          case 'RS':
+            // Image will adapt to the specified object width or height keeping its original shape.
+            f_x = f_y = Math.min(max_image_width / img.naturalWidth, max_image_height / img.naturalHeight);
+            t_w = Math.min(img.naturalWidth  * f_x, max_image_width);
+            t_h = Math.min(img.naturalHeight * f_x, max_image_height);
+            break;
+
+          case 'RH':
+          case 'RS':
+            // A scale image type that instructs the engine to stretch the image height to fit the actual height of the image.
+            // If the actual image width exceeds the declared image element width, the image is proportionally stretched to fit the declared width.
+            if ( img.naturalWidth <= max_image_width && img.naturalHeight <= max_image_height ) {
+                f_x = f_y = Math.min(max_image_width / img.naturalWidth, max_image_width / img.naturalHeight);
+            } else if ( sk_bitmap.width() > img.naturalHeight ) {
+                f_x = max_image_width / img.naturalWidth;
+                f_y = Math.min(max_image_height / img.naturalHeight, f_x);
+            } else {
+                f_y = max_image_height / img.naturalHeight;
+                f_x = Math.min(max_image_width / sk_bitmap.width(), f_y);
+            }
+            t_w = img.naturalWidth  * f_x;
+            t_h = img.naturalHeight * f_y;
+            break;
+
+          default:
+            // return? invalidate?
+            break;
+        }
+
+        // calculate x-position
+        let x;
+        if ( img_info._h === 'R' ) {
+          x   = img_info._r - t_w;
+          s_x = s_w - t_w;
+        } else if ( img_info._h === 'C' ) {
+          x   = img_info.l + ( ( max_image_width - t_w ) / 2 );
+          s_x = ( img.naturalWidth / 2 ) - ( t_w / 2 );
+        } else { /* left */
+          x   = img_info._l;
+          s_x = 0;
+        }
+
+        // calculate y-position
+        let y;
+        if ( img_info._v === 'B' ) {
+          y   = ( b - 0 /*a_image->bottom_pen_.width_*/ ) - t_h;
+          s_y = b - t_h;
+        } else if ( img_info._v === 'M' ) {
+          y   =  img_info._t  + ( ( max_image_height - t_h ) / 2 );
+          s_y = ( img_info/ 2 ) - ( t_h / 2 );
+        } else { /* top */
+          y   = img_info._t;
+          s_y = 0;
+        }
+        this._ctx.drawImage(img, s_x, s_y, s_w, s_h, x, y, t_w, t_h);
+
+        if ( false ) {  // Image scaling QA
+          let ie = document.getElementById(img_info._id);
+          ie.style.top      = (x + 150 / this._ratio) + 'px';
+          ie.style.left     = (y + 150 / this._ratio) + 'px';
+          ie.style.width    = t_w / this._ratio + 'px';
+          ie.style.height   = t_h / this._ratio + 'px';
+          ie.style.position = 'absolute';
+          ie.style.display = 'inline';
+        }
+
+        if ( false ) { // Bounding boxes debug
+          this._ctx.save();
+          this._ctx.strokeStyle = '#FF0000';
+          this._ctx.lineWidth   = 1.0;
+          this._ctx.strokeRect(img_info._l, img_info._t, img_info._r - img_info._l, img_info._b - img_info._t);
+          this._ctx.strokeStyle = '#00FF00';
+          this._ctx.strokeRect(s_x, s_y, s_w, s_h);
+          this._ctx.strokeStyle = '#0000FF';
+          this._ctx.strokeRect(x, y, t_w, t_h);
+          this._ctx.restore();
         }
       }
 

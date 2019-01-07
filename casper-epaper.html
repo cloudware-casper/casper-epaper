@@ -20,7 +20,6 @@
 
 <link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
-<link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../casper-icons/casper-icons.html">
 <!--link rel="import" href="../casper-common-ui/casper-i18n-behavior.html"-->
 <link rel="import" href="casper-epaper-imports.html">
@@ -75,14 +74,12 @@
       }
 
     </style>
-    <paper-card>
-      <canvas id="canvas" width="[[width]]" height="[[height]]"></canvas>
-      <casper-epaper-input id="input"></casper-epaper-input>
-      <casper-epaper-tooltip id="tooltip"></casper-epaper-tooltip>
-      <casper-epaper-servertip-helper id="servertip"></casper-epaper-servertip-helper>
-      <iron-icon id="line_add_button" on-tap="_addDocumentLine" icon="casper-icons:add-circle"/></iron-icon>
-      <iron-icon id="line_del_button" on-tap="_removeDocumentLine" icon="casper-icons:remove-circle"></iron-icon>
-    </paper-card>
+    <canvas id="canvas" width="[[width]]" height="[[height]]"></canvas>
+    <casper-epaper-input id="input"></casper-epaper-input>
+    <casper-epaper-tooltip id="tooltip"></casper-epaper-tooltip>
+    <casper-epaper-servertip-helper id="servertip"></casper-epaper-servertip-helper>
+    <iron-icon id="line_add_button" on-tap="_addDocumentLine" icon="casper-icons:add-circle"/></iron-icon>
+    <iron-icon id="line_del_button" on-tap="_removeDocumentLine" icon="casper-icons:remove-circle"></iron-icon>
   </template>
 
   <script>
@@ -116,11 +113,6 @@
           document: {
             type: Object,
             observer: '_documentChanged'
-          },
-          /** set when the component is inside an iframe */
-          iframe: {
-            type: Boolean,
-            value: false
           },
           /** id of the containing element that can be scrolled */
           scroller: {
@@ -265,7 +257,7 @@
           pdf.getPage(1).then(function(page) {
             let viewport = page.getViewport(this.zoom * this._ratio);
             let context  = this.$.canvas.getContext('2d');
-            var renderContext = {
+            let renderContext = {
               canvasContext: context,
               viewport: viewport
             };
@@ -322,9 +314,9 @@
        * @param {string} rowIndex undefined to highlight a parameter or the rowIndex to highligth a field
        */
       gotoParamOrField (chapterReport, fieldName, rowIndex) {
-        var chapterIndex = undefined;
-        var highlight_after_load = function() {
-            var cmd;
+        let chapterIndex = undefined;
+        let highlight_after_load = function() {
+            let cmd;
 
             if ( rowIndex ) {
               cmd = 'document highlight field "' + fieldName + '",'+ rowIndex + ';';
@@ -335,8 +327,8 @@
           }.bind(this);
 
         if ( this._jrxml !== undefined ) {
-          var reportName = this._jrxml;
-          var j;
+          let reportName = this._jrxml;
+          let j;
 
           j = reportName.lastIndexOf('/');
           reportName = reportName.substring(j === -1 ? 0 : j +1, reportName.length);
@@ -347,7 +339,7 @@
 
         if ( this.chapterIndex === undefined ) {
           if ( this._document && this._document.chapters ) {
-            for ( var i = 0; i < this._document.chapters.length; i++ ) {
+            for ( let i = 0; i < this._document.chapters.length; i++ ) {
               reportName = this._document.chapters[i].jrxml;
               j = reportName.lastIndexOf('/');
               reportName = reportName.substring(j === -1 ? 0 : j +1, reportName.length);
@@ -400,8 +392,8 @@
        * @param {boolean} forced truish to force the zoom update
        */
       setZoom (zoom, forced) {
-        var w; // Canvas width in px
-        var h; // Canvas height in px
+        let w; // Canvas width in px
+        let h; // Canvas height in px
 
         if ( this.zoom !== zoom || forced ) {
           this._hideWidgets();
@@ -420,12 +412,12 @@
       gotoPage (pageNumber) {
 
         if ( this._document && this._document.chapters && this._document.chapters.length >= 1 ) {
-          var currentPage = 1;
+          let currentPage = 1;
 
           pageNumber = parseInt(pageNumber);
-          for ( var i = 0;  i < this._document.chapters.length; i++ ) {
+          for ( let i = 0;  i < this._document.chapters.length; i++ ) {
             if ( pageNumber >= currentPage && pageNumber < (currentPage + this._document.chapters[i].pageCount) ) {
-              var newPageNumber;
+              let newPageNumber;
 
               newPageNumber = 1 + pageNumber - currentPage;
               if ( i === this._chapterIndex ) {
@@ -465,7 +457,7 @@
        */
       reOpen () {
         if ( this._document !== undefined ) {
-          var cloned_command = JSON.parse(JSON.stringify(this._document));
+          let cloned_command = JSON.parse(JSON.stringify(this._document));
           this._clear();
           this.open(cloned_command);
         } else {
@@ -481,7 +473,7 @@
         this._fireEvent('casper-epaper-notification', { message: 'update:variable,PAGE_NUMBER,1;' });
         this._document = undefined;
         this._callRpc('close', 'document close "' + this._documentId  + '";', function(a_epaper, a_message) {
-            var expected_response = 'S:ok:close:' + a_epaper._documentId;
+            let expected_response = 'S:ok:close:' + a_epaper._documentId;
             if ( a_message.indexOf(expected_response) === 0 ) {
               if ( a_message.length > expected_response.length ) {
                 a_epaper._documentId  = a_message.substring(expected_response.length + 1).replace('\n', '');
@@ -504,7 +496,7 @@
           return undefined;
         }
 
-        var job = {
+        let job = {
           tube: 'casper-print-queue',
           name: name,
           validity: 3600,
@@ -516,8 +508,8 @@
             path: print ? 'print' : 'download'
           },
         }
-        for (var i = 0; i < this._document.chapters.length; i++) {
-          var chapter = {
+        for ( let i = 0; i < this._document.chapters.length; i++) {
+          let chapter = {
             name: name,
             title: title,
             jrxml: this._document.chapters[i].jrxml + '.jrxml',  // Make this optional on CPQ???
@@ -542,7 +534,7 @@
 
         first_document = documents[0]
 
-        if (first_document !== undefined) {
+        if ( first_document !== undefined ) {
           name = first_document.name || this.i18n.apply(this, first_document.filename_template)
           title = first_document.title || name
         }
@@ -554,7 +546,7 @@
           return undefined;
         }
 
-        var job = {
+        let job = {
           tube: 'casper-print-queue',
           name: name,
           validity: 3600,
@@ -567,11 +559,11 @@
           },
         }
 
-        for (var i = 0; i < documents.length; i++) {
+        for (let i = 0; i < documents.length; i++) {
           _document = documents[i]
           _document_name = this.i18n.apply(this, _document.filename_template)
 
-          for (var j = 0; j < _document.chapters.length; j++) {
+          for (let j = 0; j < _document.chapters.length; j++) {
             _chapter = _document.chapters[j]
 
             _print_document = {
@@ -637,7 +629,7 @@
         this._document       = JSON.parse(JSON.stringify(documentModel));
         this._chapterCount   = this._document.chapters.length;
         this._totalPageCount = 0;
-        for ( var idx = 0; idx < this._chapterCount; idx++ ) {
+        for ( let idx = 0; idx < this._chapterCount; idx++ ) {
           this._document.chapters[idx].locale    = this._document.chapters[idx].locale    || 'pt_PT';
           this._document.chapters[idx].editable  = this._document.chapters[idx].editable  || false;
           this._document.chapters[idx].pageCount = this._document.pageCount               || 1;
@@ -655,7 +647,7 @@
        */
       _openChapter (pageNumber, postOpenFunction) {
         // Promise to open the report layout in case it not loaded yet
-        var open_document = function () {
+        let open_document = function () {
           return new Promise(function (a_resolve, a_reject) {
             if ( this._jrxml === this._chapter.jrxml && this._locale === this._chapter.locale ) {
               return a_resolve(this);
@@ -681,9 +673,9 @@
         }.bind(this);
 
         // Promise to load the document data
-        var load_document = function () {
+        let load_document = function () {
           return new Promise(function (a_resolve, a_reject) {
-            var args = {
+            let args = {
               id:          this._documentId,
               editable:    this._chapter.editable,
               path:        this._chapter.path,
@@ -725,7 +717,7 @@
             a_resolve(this);
           }.bind(this);
         }
-        var post_open = function() {
+        let post_open = function() {
           return new Promise(postOpenFunction);
         }.bind(this);
 
@@ -805,13 +797,13 @@
        * @brief Determine the device pixel ratio: 1 on classical displays 2 on retina/UHD displays
        */
       _setupPixelRatio () {
-        var devicePixelRatio  = window.devicePixelRatio || 1;
+        let devicePixelRatio  = window.devicePixelRatio || 1;
         if (devicePixelRatio > 1.6) {
           devicePixelRatio = 2;
         } else {
           devicePixelRatio = 1;
         }
-        var backingStoreRatio = this._ctx.webkitBackingStorePixelRatio ||
+        let backingStoreRatio = this._ctx.webkitBackingStorePixelRatio ||
                                 this._ctx.mozBackingStorePixelRatio ||
                                 this._ctx.msBackingStorePixelRatio ||
                                 this._ctx.oBackingStorePixelRatio ||
@@ -897,10 +889,10 @@
       //***************************************************************************************//
 
       _paintGrid (a_major, a_minor) {
-        var width  = this._canvas.width;
-        var height = this._canvas.height;
-        var x      = 0;
-        var y      = 0;
+        let width  = this._canvas.width;
+        let height = this._canvas.height;
+        let x      = 0;
+        let y      = 0;
 
         this._ctx.beginPath();
         this._ctx.strokeStyle = "#C0C0C0";
@@ -1008,7 +1000,7 @@
        * Paints blank page
        */
       _clearPage () {
-        var saved_fill = this._ctx.fillStyle;
+        let saved_fill = this._ctx.fillStyle;
 
         this._ctx.fillStyle = this._background_color;
         this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
@@ -1027,7 +1019,7 @@
        * @note This function must keep the object context and canvas context unmodified
        */
       _repaintPage () {
-        var band;
+        let band;
 
         this._reset_redraw_timer();
 
@@ -1040,7 +1032,7 @@
 
         // ... repaint the bands top to down to respect the painter's algorithm ...
         if ( this._bands !== undefined ) {
-          for ( var i = 0; i < this._bands.length; i++ ) {
+          for ( let i = 0; i < this._bands.length; i++ ) {
 
             band = this._bands[i];
             this._r_idx       = band._idx;
@@ -1084,22 +1076,22 @@
        */
       _paintBand () {
 
-        var do_paint   = true;
-        var option     = '';
-        var option_num = 0.0;
-        var x          = 0.0;
-        var y          = 0.0;
-        var x2         = 0.0;
-        var y2         = 0.0;
-        var r          = 0.0;
-        var w          = 0.0;
-        var h          = 0.0;
-        var sx         = 0.0;
-        var sy         = 0.0;
-        var sh         = 0.0;
-        var sw         = 0.0;
-        var s          = this._ratio;
-        var t1,t2,t3;
+        let do_paint   = true;
+        let option     = '';
+        let option_num = 0.0;
+        let x          = 0.0;
+        let y          = 0.0;
+        let x2         = 0.0;
+        let y2         = 0.0;
+        let r          = 0.0;
+        let w          = 0.0;
+        let h          = 0.0;
+        let sx         = 0.0;
+        let sy         = 0.0;
+        let sh         = 0.0;
+        let sw         = 0.0;
+        let s          = this._ratio;
+        let t1,t2,t3;
 
         this._resetRenderState();
         while (this._r_idx < this._message.length) {
@@ -1141,7 +1133,7 @@
               y = this._getDouble();
 
               // ... search for a band with same id on the stored band array ...
-              var band = null;
+              let band = null;
               sx = this._binaryFindBandById(w);
               if ( sx !== -1 ) {
                 band = this._bands[sx];
@@ -1354,7 +1346,7 @@
                 this._sub_document_uri   = undefined;
                 this._sub_document_jrxml = undefined;
 
-                var edit_mode = this._message[this._r_idx++];
+                let edit_mode = this._message[this._r_idx++];
                 switch ( edit_mode ) {
 
                 case 'r': // 'r' Text, but read only
@@ -1407,7 +1399,7 @@
                   break;
 
                 case 'c':  // 'c'<version>,<empty_line><length>,<field_id>,<length>,<display_field>{,<length>,<field>}[,<length>,<list json>] Simple combo  client side
-                  var version = this._getDouble();
+                  let version = this._getDouble();
                   if ( version === 2 ) {
                     w  = this._getDouble();
                     t2 = this._message.substring(this._r_idx, this._r_idx + w);
@@ -1419,12 +1411,12 @@
                     }
                   } else {
                     // empty_line: 0 or 1
-                    var nullable_list = this._getDouble();
+                    let nullable_list = this._getDouble();
                     // fields '}'
-                    var fields = [];
+                    let fields = [];
                     w = this._getDouble();
                     if ( w > 2 ) {
-                      var tmp = this._message.substring(this._r_idx + 1, this._r_idx + w - 1);
+                      let tmp = this._message.substring(this._r_idx + 1, this._r_idx + w - 1);
                       fields = tmp.split(',');
                       //console.log("Combo FIELDS: " + fields);
                     }
@@ -1504,10 +1496,10 @@
                   this.$.input.setMode(edit_mode);
 
 
-                  var fields = [];
+                  let fields = [];
                   w = this._getDouble();
                   if ( w > 2 ) {
-                    var tmp = this._message.substring(this._r_idx + 1, this._r_idx + w - 1);
+                    let tmp = this._message.substring(this._r_idx + 1, this._r_idx + w - 1);
                     fields = tmp.split(',');
 
                     //console.log("Combo FIELDS: " + fields);
@@ -1546,11 +1538,11 @@
                   this._r_idx += 1; // '{'
 
                   w = this._getDouble();
-                  var id = this._message.substring(this._r_idx, this._r_idx + w);
+                  let id = this._message.substring(this._r_idx, this._r_idx + w);
                   this._r_idx += w + 1;
 
                   w = this._getDouble();
-                  var value = this._message.substring(this._r_idx, this._r_idx + w);
+                  let value = this._message.substring(this._r_idx, this._r_idx + w);
                   this._r_idx += w + 1; // +1 -> '}'
                   this.$.input.setValue(id, value);
 
@@ -1599,7 +1591,7 @@
                 if ( ';' !== this._message[this._r_idx - 1] ) {
                   w = this._getDouble();
 
-                  var json = this._message.substring(this._r_idx, this._r_idx + w);
+                  let json = this._message.substring(this._r_idx, this._r_idx + w);
 
                   //this.$.input.setModelFromJson(undefined, json);
                   //this.$.input.autoSizeOverlay(this.$.input.style.width);
@@ -1625,7 +1617,7 @@
 
                 this._r_idx += 1;
 
-                var tmp_stroke_style = this._ctx.strokeStyle;
+                let tmp_stroke_style = this._ctx.strokeStyle;
                 this._ctx.strokeStyle = "#FF0000";
                 this._ctx.strokeRect(this._getDouble(), this._getDouble(), this._getDouble(), this._getDouble());
                 this._ctx.strokeStyle = tmp_stroke_style;
@@ -1782,7 +1774,7 @@
               y = this._getDouble();
               w = this._getDouble();
               h = this._getDouble();
-              var ox = (w / 2) * CasperEpaper.KAPPA,
+              let ox = (w / 2) * CasperEpaper.KAPPA,
                   oy = (h / 2) * CasperEpaper.KAPPA,
                   xe = x + w,
                   ye = y + h,
@@ -1944,8 +1936,8 @@
                 this._grid_major = this._getDouble();
                 this._grid_minor = this._getDouble();
               } else if ( 'p' === option ) {
-                var new_page_number = this._getDouble();
-                var new_page_count = this._getDouble();
+                let new_page_number = this._getDouble();
+                let new_page_count = this._getDouble();
 
                 if ( this._chapterPageNumber != new_page_number || this._chapterPageCount != new_page_count ) {
                   //if ( this.on_page_properties_changed != undefined ) {
@@ -1973,6 +1965,8 @@
         this._canvas.height = this._canvas_height * this._ratio;
         this._canvas.style.width  = this._canvas_width  + 'px';
         this._canvas.style.height = this._canvas_height + 'px';
+        this.style.width  = this._canvas_width  + 'px'; // TODO martelada
+        this.style.height = this._canvas_height + 'px'; // TODO martelada
         this._sx = parseFloat((this._canvas.width  / this._page_width).toFixed(2));
         this._scalePxToServer = this._page_width * this._ratio / this._canvas.width;
         this._clearPage();
@@ -1981,9 +1975,9 @@
       _binaryFindBandById (a_id) {
 
         if ( this._bands !== undefined && this._bands.length > 0 ) {
-          var mid;
-          var min = 0.0;
-          var max = this._bands.length - 1;
+          let mid;
+          let min = 0.0;
+          let max = this._bands.length - 1;
 
           while ( min <= max ) {
             mid = Math.floor((min + max) / 2.0);
@@ -2006,7 +2000,7 @@
        * @start the redraw timer will redraw the page after a timeout
        */
       _restart_redraw_timer (a_time_in_ms) {
-        var timeout = a_time_in_ms !== undefined ? a_time_in_ms : 300;
+        let timeout = a_time_in_ms !== undefined ? a_time_in_ms : 300;
 
         if ( window[this._redraw_timer_key] !== undefined ) {
           window.clearTimeout(window[this._redraw_timer_key]);
@@ -2158,17 +2152,17 @@
 
       _adjustScroll () {
         if ( this._scrollContainer ) {
-          var inputCr = this.$.input.getBoundingClientRect();
-          var leftEdge, rightEdge, topEdge, bottomEdge;
+          let inputCr = this.$.input.getBoundingClientRect();
+          let leftEdge, rightEdge, topEdge, bottomEdge;
 
-          if ( this.iframe ) {
+          /*if ( this.iframe ) {
             leftEdge   = window.innerWidth  * 0.05;
             rightEdge  = window.innerWidth  * 0.95;
             topEdge    = window.innerHeight * 0.05;
             bottomEdge = window.innerHeight * 0.95;
           } else {
             console.log('=== TODO TODO TODO normal scrolling w/o iframe');
-          }
+          }*/
 
           // ... for each edge check if the input is outside ...
           if ( inputCr.width > rightEdge - leftEdge ) {
@@ -2225,9 +2219,9 @@
       _binaryFindBandByY (a_y) {
 
         if ( this._bands !== undefined && this._bands.length > 0 ) {
-          var mid;
-          var min = 0.0;
-          var max = this._bands.length - 1;
+          let mid;
+          let min = 0.0;
+          let max = this._bands.length - 1;
 
           while ( min <= max ) {
             mid = Math.floor((min + max) / 2.0);
@@ -2254,7 +2248,7 @@
           this._deactivateLineContextMenu();
           return;
         } else {
-          var idx = this._binaryFindBandByY(a_y);
+          let idx = this._binaryFindBandByY(a_y);
 
           if ( idx != -1 ) {
             if ( this._bands[idx]._type === 'DT' && this._bands[idx].editable_ == true ) {
@@ -2286,8 +2280,8 @@
       }
 
       _activateLineContextMenu (a_band) {
-        var button_y = a_band._ty + a_band._height / 2 - (CasperEpaper.BTN_SIZE * this._ratio) / 2;
-        var button_x = (this._page_width - this._right_margin) * this._sx;
+        let button_y = a_band._ty + a_band._height / 2 - (CasperEpaper.BTN_SIZE * this._ratio) / 2;
+        let button_x = (this._page_width - this._right_margin) * this._sx;
 
         this.$.line_add_button.style.left = (button_x / this._ratio ) + 'px';
         this.$.line_add_button.style.top  = (button_y / this._ratio ) + 'px';
@@ -2310,7 +2304,7 @@
        * Cover the whole canvas with a white transparent overlay
        */
       _washout_canvas () {
-        var saved_fill = this._ctx.fillStyle;
+        let saved_fill = this._ctx.fillStyle;
         this._ctx.fillStyle = 'rgba(255,255,255,0.5)';
         this._ctx.fillRect(0,0, this._canvas.width, this._canvas.height);
         this._ctx.fillStyle = saved_fill;
@@ -2323,7 +2317,7 @@
        * @param {number} pageCount the updated page counts
        */
       _updatePageCount (chapterIndex, pageCount) {
-        var previousTotalPages = this._totalPageCount;
+        let previousTotalPages = this._totalPageCount;
 
         if ( this._document && this._document.chapters && chapterIndex >= 0 && chapterIndex < this._document.chapters.length) {
           this._totalPageCount -= ( this._document.chapters[chapterIndex].pageCount || 1);
@@ -2343,9 +2337,9 @@
       _updatePageNumber (pageNumber) {
 
         if ( this._document && this._document.chapters ) {
-          var page = pageNumber;
+          let page = pageNumber;
 
-          for ( var idx = 0; idx < (this._chapterIndex || 0); idx++ ) {
+          for ( let idx = 0; idx < (this._chapterIndex || 0); idx++ ) {
             page += ( this._document.chapters[idx].pageCount || 1);
           }
           if ( this._loading === false ) {
@@ -2395,7 +2389,7 @@
                 this._updatePageNumber(notification.variables.PAGE_NUMBER);
               }
             }
-            //var message = a_message.substring(2);
+            //let message = a_message.substring(2);
 
             //if ( message.startsWith('update:focus,forward') ) {
             //  if ( this.nextChapter() ) {
@@ -2406,14 +2400,14 @@
             //    return;
             //  }
             //} else if (message.startsWith('update:variable,PAGE_COUNT,')) {
-            //  var pageCount;
+            //  let pageCount;
 //
             //  pageCount = parseInt(message.substring('update:variable,PAGE_COUNT,'.length));
             //  this._updatePageCount(this._chapterIndex, pageCount);
             //  return;
 //
             //} else if (message.startsWith('update:variable,PAGE_NUMBER,')) {
-            //  var pageNumber;
+            //  let pageNumber;
 //
             //  pageNumber = parseInt(message.substring('update:variable,PAGE_NUMBER,'.length));
             //  this._updatePageNumber(pageNumber);
@@ -2427,16 +2421,16 @@
           //  this._r_idx   = 1;
           //  this._message = a_message;
 //
-          //  var w = this._getDouble();
-          //  var k = this._message.substring(this._r_idx, this._r_idx + w);
+          //  let w = this._getDouble();
+          //  let k = this._message.substring(this._r_idx, this._r_idx + w);
           //  this._r_idx += w + 1; // +1 -> ','
 //
           //      w = this._getDouble();
-          //  var t = this._message.substring(this._r_idx, this._r_idx + w);
+          //  let t = this._message.substring(this._r_idx, this._r_idx + w);
           //  this._r_idx += w + 1; // +1 -> ','
 //
           //      w = this._getDouble();
-          //  var m = this._message.substring(this._r_idx, this._r_idx + w);
+          //  let m = this._message.substring(this._r_idx, this._r_idx + w);
           //  this._r_idx += w + 1; // +1 -> ','
 //
           //  if ( this._message[this._r_idx - 1] != ';' ) {
@@ -2446,7 +2440,7 @@
           //  //if ( undefined !== this._listener && undefined !== this._listener.on_error_received ) {
           //  //  this._listener.on_error_received(t, m);
           //  //}
-          //  var errorDetail = undefined;
+          //  let errorDetail = undefined;
           //  if ( m.indexOf('S:failure:load:') === 0 ) {
           //    error = JSON.parse(m.replace('S:failure:load:',''));
           //    errorDetail = error.errors.first();
@@ -2474,14 +2468,14 @@
       }
 
       _fireEvent (eventName, eventData) {
-        if ( this.iframe ) {
+        //if ( this.iframe ) {
           window.parent.document.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
-        } else {
+        //} else {
           // @TODO remove legacy API
-          if ( undefined !== this.fire ) {
-            this.fire(eventName, eventData);
-          }
-        }
+          //if ( undefined !== this.fire ) {
+          //  this.fire(eventName, eventData);
+          //}
+        //}
       }
 
     }

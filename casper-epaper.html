@@ -514,6 +514,7 @@
             title: title,
             jrxml: this._document.chapters[i].jrxml + '.jrxml',  // Make this optional on CPQ???
             jsonapi: {
+              // TODO extract list of relationships from the report!!!!
               urn: this._document.chapters[i].path + '?include=lines', // Make this optional on CPQ???
               prefix: null,
               user_id: null,
@@ -2087,7 +2088,7 @@
           x   = img_info._r - t_w;
           s_x = s_w - t_w;
         } else if ( img_info._h === 'C' ) {
-          x   = img_info.l + ( ( max_image_width - t_w ) / 2 );
+          x   = img_info._l + ( ( max_image_width - t_w ) / 2 );
           s_x = ( img.naturalWidth / 2 ) - ( t_w / 2 );
         } else { /* left */
           x   = img_info._l;

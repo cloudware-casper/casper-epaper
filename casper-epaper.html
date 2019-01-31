@@ -48,10 +48,10 @@
     <style>
       :host {
         display: block;
-      }
-
-      #canvas {
-        outline: none;
+        background-color: #ddd;
+        position: relative;
+        width: 100%;
+        height: 100%;
       }
 
       iron-icon {
@@ -73,13 +73,84 @@
         fill: #B94F4F;
       }
 
+      .desktop {
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        overflow: auto;
+        display: flex;
+      }
+
+      .shadow {
+        top: 0px;
+        left: 0px;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        -moz-box-shadow:    inset 0 0 15px #00000040;
+        -webkit-box-shadow: inset 0 0 15px #00000040;
+        box-shadow:         inset 0 0 15px #00000040;
+        pointer-events:     none;
+      }
+
+      canvas {
+        outline: none;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 5px 12px 0px, rgba(0, 0, 0, 0.12) 0px 0px 12px 0px;
+        margin-top: 60px;
+        margin-bottom: 60px;
+      }
+
+      .toolbar {
+        top: 0px;
+        right: 32px;
+        position: absolute;
+        z-index: 1;
+      }
+
+      .toolbar-button {
+        margin: 6px 2px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        padding: 0px;
+        max-width: 32px;
+        max-height: 32px;
+        --iron-icon-fill-color: white;
+        --iron-icon-width: 100%;
+        --iron-icon-height: 100%;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 5px 12px 0px, rgba(0, 0, 0, 0.12) 0px 0px 12px 0px;
+      }
+
+      .toolbar-white {
+        --iron-icon-fill-color: var(--primary-color);
+        background-color: white;
+      }
+
+      .spacer {
+        flex-grow: 1.0;
+      }
+
     </style>
-    <canvas id="canvas" width="[[width]]" height="[[height]]"></canvas>
-    <casper-epaper-input id="input"></casper-epaper-input>
-    <casper-epaper-tooltip id="tooltip"></casper-epaper-tooltip>
-    <casper-epaper-servertip-helper id="servertip"></casper-epaper-servertip-helper>
-    <iron-icon id="line_add_button" on-tap="_addDocumentLine" icon="casper-icons:add-circle"/></iron-icon>
-    <iron-icon id="line_del_button" on-tap="_removeDocumentLine" icon="casper-icons:remove-circle"></iron-icon>
+    <div class="toolbar">
+      <paper-icon-button class="toolbar-button toolbar-white" on-tap="_zoomOut"          icon="casper-icons:minus"></paper-icon-button>
+      <paper-icon-button class="toolbar-button toolbar-white" on-tap="_zoomIn"           icon="casper-icons:plus"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-tap="_gotoPreviousPage" icon="casper-icons:arrow-left"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-tap="_gotoNextPage"     icon="casper-icons:arrow-right"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-tap="_print"            icon="casper-icons:print"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-tap="_download"         icon="casper-icons:file-pdf"></paper-icon-button>
+    </div>
+    <div class="desktop">
+      <div class="spacer"></div>
+      <canvas id="canvas" width="[[width]]" height="[[height]]"></canvas>
+      <div class="spacer"></div>
+      <casper-epaper-input id="input"></casper-epaper-input>
+      <casper-epaper-tooltip id="tooltip"></casper-epaper-tooltip>
+      <casper-epaper-servertip-helper id="servertip"></casper-epaper-servertip-helper>
+      <iron-icon id="line_add_button" on-tap="_addDocumentLine" icon="casper-icons:add-circle"/></iron-icon>
+      <iron-icon id="line_del_button" on-tap="_removeDocumentLine" icon="casper-icons:remove-circle"></iron-icon>
+    </div>
+    <div class="shadow"></div>
   </template>
 
   <script>
@@ -122,11 +193,6 @@
         };
       }
 
-      /* TODO port to 2.0
-      behaviors: [
-        Polymer.CasperI18nBehavior
-      ],
-
       /*
        * Constants
        */
@@ -153,6 +219,7 @@
         this._ctx.globalCompositeOperation = 'copy';
         this._chapterPageCount  = 0;
         this._chapterPageNumber = 1;
+        this._currentPage       = 1;
         this._pageNumber        = 1;
         this._totalPageCount    = 0;
         this._message           = '';
@@ -226,12 +293,8 @@
         this._deactivateLineContextMenu();
       }
 
-      disconnectedCallback () {
-        super.disconnectedCallback();
-      }
-
       isPrintableDocument () {
-        return this._documentId === undefined || this._document === undefined || this._document.chapters === undefined || this._document.loading
+        return this._documentId === undefined || this._document === undefined || this._document.chapters === undefined || this._document.loading;
       }
 
       //***************************************************************************************//
@@ -385,6 +448,14 @@
         return false;
       }
 
+      _zoomOut () {
+        this.setZoom(this.zoom * 0.8);
+      }
+
+      _zoomIn () {
+        this.setZoom(this.zoom * 1.2);
+      }
+
       /**
        * Set the zoom factor (document pt to screen px ratio)
        *
@@ -402,6 +473,14 @@
           h = Math.round((this._page_height || this.height) * this.zoom);
           this._setSize(w, h);
         }
+      }
+
+      _gotoPreviousPage () {
+        this._currentPage = this.gotoPage(this._currentPage - 1);
+      }
+
+      _gotoNextPage () {
+        this._currentPage = this.gotoPage(this._currentPage + 1);
       }
 
       /**
@@ -424,15 +503,18 @@
                 if ( this._chapterPageNumber !== newPageNumber ) {
                   this._resetScroll();
                   this.socket.gotoPage(this._documentId, newPageNumber);
+                  return pageNumber;
                 }
               } else {
                 this.gotoChapter(i, newPageNumber);
+                return pageNumber;
               }
               this._chapterPageNumber = newPageNumber;
             }
             currentPage += this._document.chapters[i].pageCount;
           }
         }
+        return this._currentPage;
       }
 
       /**
@@ -448,7 +530,7 @@
        * Clears the page and re-starts the connection to the server
        */
       reconnect () {
-        this._clear(true);
+        this._clear(true);  // TODO check need
         this._socket.connect();
       }
 
@@ -488,11 +570,19 @@
         );
       }
 
-      getPrintJob (print) {
-        name = this.i18n.apply(this, this._document.filename_template);
-        title = name
+      _print () {
+        window.app.showPrintDialog(this.getPrintJob(true));
+      }
 
-        if ( this.isPrintableDocument() ) {
+      _download () {
+        window.app.showPrintDialog(this.getPrintJob(false));
+      }
+
+      getPrintJob (print) {
+        let name  = 'TESTE'; ///*this.i18n.apply(this, */this._document.filename_template;
+        let title = name
+
+        if ( this.isPrintableDocument() ) { // ??? reverted logic WTF?
           return undefined;
         }
 
@@ -507,19 +597,20 @@
           public_link: {
             path: print ? 'print' : 'download'
           },
+          action: print ? 'epaper-print' : 'epaper-download'
         }
         for ( let i = 0; i < this._document.chapters.length; i++) {
           let chapter = {
             name: name,
             title: title,
-            jrxml: this._document.chapters[i].jrxml + '.jrxml',  // Make this optional on CPQ???
+            jrxml: this._document.chapters[i].jrxml,
             jsonapi: {
               // TODO extract list of relationships from the report!!!!
-              urn: this._document.chapters[i].path + '?include=lines', // Make this optional on CPQ???
+              urn: 'https://app.toconline.pt/' + this._document.chapters[i].path + '?include=lines', // Make this optional on CPQ???
               prefix: null,
               user_id: null,
-              company_id: null,
-              company_schema: null,
+              entity_id: null,
+              entity_schema: null,
               sharded_schema: null,
               accounting_schema: null,
               accounting_prefix: null
@@ -788,7 +879,7 @@
           this._canvas_height = height;
           this._setupScale();
           if ( this._documentId !== undefined && this._documentScale !== this._sx ) {
-            this._sendCommand('document set scale ' + this._sx + ' ' + this._sx + ';');
+            this._socket.setScale(this._documentId, 1.0 * this._sx.toFixed(2));
             this._documentScale = this._sx;
           }
         }
@@ -1966,8 +2057,6 @@
         this._canvas.height = this._canvas_height * this._ratio;
         this._canvas.style.width  = this._canvas_width  + 'px';
         this._canvas.style.height = this._canvas_height + 'px';
-        this.style.width  = this._canvas_width  + 'px'; // TODO martelada
-        this.style.height = this._canvas_height + 'px'; // TODO martelada
         this._sx = parseFloat((this._canvas.width  / this._page_width).toFixed(2));
         this._scalePxToServer = this._page_width * this._ratio / this._canvas.width;
         this._clearPage();
@@ -2468,7 +2557,7 @@
         }
       }
 
-      _fireEvent (eventName, eventData) {
+      _fireEvent (eventName, eventData) { // TODO check legacy
         //if ( this.iframe ) {
           window.parent.document.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
         //} else {

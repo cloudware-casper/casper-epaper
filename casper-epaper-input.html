@@ -24,7 +24,7 @@
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../casper-icons/casper-icons.html">
 <!--link rel="import" href="casper-epaper-tooltip.html"-->
-<link rel="import" href="casper-epaper-datepicker.html">
+<!--link rel="import" href="casper-epaper-datepicker.html"-->
 <!--link rel="import" href="casper-epaper-combolist.html"-->
 
 <!--
@@ -151,7 +151,7 @@
         //this._input          = this.$.input;
         this._binding        = undefined;
         this._textArea       = this.$.textarea;//this.$.input.$.textarea;
-        this.$.date.inputBox = this.$.textarea;//this.$.input.$.textarea;
+        //this.$.date.inputBox = this.$.textarea;//this.$.input.$.textarea;
         this._visible        = true;
         this.setVisible(false);
         // TODO this.$.combo.setPositionTarget(this);
@@ -257,7 +257,7 @@
       hideOverlays (hideButtons) {
         this.hideTooltip();
         // TODO this.$.combo.setVisible(false);
-        this.$.date.setVisible(false);
+        //this.$.date.setVisible(false);
         if ( hideButtons ) {
           this.$.dropdown_btn.style.display = 'none';
           this.$.edit_btn.style.display = 'none';
@@ -316,7 +316,7 @@
           break;
         case 'd': // Date
           this._textArea.style.cursor = 'text';
-          this._setOverlay(this.$.date);
+          //this._setOverlay(this.$.date);
           break;
         case 'R': // Radio
           this._textArea.style.cursor = 'pointer';
@@ -749,9 +749,9 @@
       /*****************************************************************************************/
 
       _setValueD (date) {
-        this.$.date.setLocale('pt');     // TODO from server
+        //this.$.date.setLocale('pt');     // TODO from server
         this._dateFormat = 'DD/MM/YYYY'; // TODO from server
-        this.$.date.setValue(moment(date, this._dateFormat).format('YYYY-MM-DD'));
+        //this.$.date.setValue(moment(date, this._dateFormat).format('YYYY-MM-DD'));
       }
 
       _onDateOverlayClosed (event) {

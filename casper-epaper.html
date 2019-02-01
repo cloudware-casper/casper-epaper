@@ -89,9 +89,9 @@
         position: absolute;
         width: 100%;
         height: 100%;
-        -moz-box-shadow:    inset 0 0 15px #00000040;
-        -webkit-box-shadow: inset 0 0 15px #00000040;
-        box-shadow:         inset 0 0 15px #00000040;
+        -moz-box-shadow:    inset 0 0 10px #00000080;
+        -webkit-box-shadow: inset 0 0 10px #00000080;
+        box-shadow:         inset 0 0 10px #00000080;
         pointer-events:     none;
       }
 
@@ -165,8 +165,8 @@
 
       static get properties () {
         return {
-          /** Websocket that connects to the casper server */
-          socket: Object,
+          /** The casper application  */
+          app: Object,
           /** component width in px */
           width: {
             type: Number,
@@ -211,7 +211,7 @@
 
       ready () {
         super.ready ();
-        this._socket            = this.socket;
+        this._socket            = this.app.socket;
         this._canvas            = this.$.canvas;
         this._canvas_width      = this._canvas.width;
         this._canvas_height     = this._canvas.height;
@@ -288,6 +288,8 @@
         this.$.canvas.addEventListener('mousemove', e => this._moveHandler(e));
         this.$.canvas.addEventListener('mousedown', e => this._mouseDownHandler(e));
         this.$.canvas.addEventListener('mouseup'  , e => this._mouseUpHandler(e));
+
+        this._socket.addEventListener('casper-signed-in', (e) => this.reOpen(e));
       }
 
       connectedCallback () {
@@ -504,7 +506,7 @@
               if ( i === this._chapterIndex ) {
                 if ( this._chapterPageNumber !== newPageNumber ) {
                   this._resetScroll();
-                  this.socket.gotoPage(this._documentId, newPageNumber);
+                  this._socket.gotoPage(this._documentId, newPageNumber);
                   return pageNumber;
                 }
               } else {
@@ -526,14 +528,6 @@
        */
       getPageCount () {
         return this._totalPageCount;
-      }
-
-      /**
-       * Clears the page and re-starts the connection to the server
-       */
-      reconnect () {
-        this._clear(true);  // TODO check need
-        this._socket.connect();
       }
 
       /**
@@ -573,11 +567,11 @@
       }
 
       _print () {
-        window.app.showPrintDialog(this.getPrintJob(true));
+        this.app.showPrintDialog(this.getPrintJob(true));
       }
 
       _download () {
-        window.app.showPrintDialog(this.getPrintJob(false));
+        this.app.showPrintDialog(this.getPrintJob(false));
       }
 
       getPrintJob (print) {
@@ -607,8 +601,8 @@
             title: title,
             jrxml: this._document.chapters[i].jrxml,
             jsonapi: {
-              // TODO extract list of relationships from the report!!!!
-              urn: 'https://app.toconline.pt/' + this._document.chapters[i].path + '?include=lines', // Make this optional on CPQ???
+              // TODO extract list of relationships from the report!!!! // TODO NO TOCONLINE
+              urn: 'https://app.toconline.pt/' + this._document.chapters[i].path + '?' + ((undefined !== this._document.chapters[i].params && '' !== this._document.chapters[i].params) ? this._document.chapters[i].params : 'include=lines'),
               prefix: null,
               user_id: null,
               entity_id: null,
@@ -746,7 +740,7 @@
             if ( this._jrxml === this._chapter.jrxml && this._locale === this._chapter.locale ) {
               return a_resolve(this);
             }
-            this.socket.openDocument(this._chapter, function (response) {
+            this._socket.openDocument(this._chapter, function (response) {
               if ( response.errors !== undefined ) {
                 a_reject(response);
               } else {
@@ -778,7 +772,7 @@
               page:        this._nextPage
             };
             this._chapter.id = this._documentId;
-            this.socket.loadDocument(args, function (response) {
+            this._socket.loadDocument(args, function (response) {
               if ( response.errors !== undefined ) {
                 a_reject(response);
               } else {
@@ -968,9 +962,9 @@
       }
 
       _mouseUpHandler (a_event) {
-        this.socket.sendClick(this._documentId,
-                              parseFloat((a_event.offsetX * this._scalePxToServer).toFixed(2)),
-                              parseFloat((a_event.offsetY * this._scalePxToServer).toFixed(2)));
+        this._socket.sendClick(this._documentId,
+                               parseFloat((a_event.offsetX * this._scalePxToServer).toFixed(2)),
+                               parseFloat((a_event.offsetY * this._scalePxToServer).toFixed(2)));
         if ( this._edition ) {
           this.$.input.grabFocus();
         }
@@ -2278,10 +2272,10 @@
 
       _addDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
-          this.socket.addBand(this._documentId,
-                              this._bands[this._context_menu_idx]._type,
-                              this._bands[this._context_menu_idx]._id,
-                              this._addDocumentLineResponse.bind(this));
+          this._socket.addBand(this._documentId,
+                               this._bands[this._context_menu_idx]._type,
+                               this._bands[this._context_menu_idx]._id,
+                               this._addDocumentLineResponse.bind(this));
         }
       }
 
@@ -2294,10 +2288,10 @@
 
       _removeDocumentLine (a_src_widget) {
         if ( this._context_menu_idx !== - 1) {
-          this.socket.deleteBand(this._documentId,
-                                 this._bands[this._context_menu_idx]._type,
-                                 this._bands[this._context_menu_idx]._id,
-                                 this._removeDocumentLineResponse.bind(this));
+          this._socket.deleteBand(this._documentId,
+                                  this._bands[this._context_menu_idx]._type,
+                                  this._bands[this._context_menu_idx]._id,
+                                  this._removeDocumentLineResponse.bind(this));
         }
       }
 

@@ -32,13 +32,13 @@
       }
 
       static get properties () {
-        return  {       
+        return  {
           /** Mouse move threshold, movement bellow this treshold is ignored */
           threshold: {
             type: Number,
             value: 4
           },
-          /** Time the mouse has to stay in overing inside the threshold to trigger a request */ 
+          /** Time the mouse has to stay in overing inside the threshold to trigger a request */
           hoveringTime: {
             type: Number,
             value: 500
@@ -80,7 +80,7 @@
        *
        * @param {number} x horizontal coordinate of the mouse event (relative to canvas)
        * @param {number} y vertical coordinate of the mouse event (relative to canvas)
-       * @param {number} s scale to convert screen px to server pt scale 
+       * @param {number} s scale to convert screen px to server pt scale
        */
       onMouseMove (x, y, s) {
         var mouse_over;
@@ -158,10 +158,10 @@
       _onOverHandler () {
         if ( Math.abs(this._center_x - this._last_x) <= this.threshold &&
              Math.abs(this._center_y - this._last_y) <= this.threshold ) {
-          this.epaper.socket.getHint(this.epaper._documentId, 
-                                     this._scalePxToServer * this._center_x,
-                                     this._scalePxToServer * this._center_y, 
-                                     this._getHintResponse.bind(this));
+          this.epaper._socket.getHint(this.epaper._documentId,
+                                      this._scalePxToServer * this._center_x,
+                                      this._scalePxToServer * this._center_y,
+                                      this._getHintResponse.bind(this));
           this._resetTimer();
         } else {
           this._updateCenter(this._last_x, this._last_y);

@@ -103,7 +103,7 @@
       }
 
       .toolbar {
-        top: 0px;
+        top: 6px;
         right: 32px;
         position: absolute;
         z-index: 1;
@@ -119,7 +119,9 @@
         --iron-icon-fill-color: white;
         --iron-icon-width: 100%;
         --iron-icon-height: 100%;
-        box-shadow: rgba(0, 0, 0, 0.24) 0px 5px 12px 0px, rgba(0, 0, 0, 0.12) 0px 0px 12px 0px;
+        -webkit-box-shadow: 0px 2px 12px -1px rgba(0,0,0,0.61);
+        -moz-box-shadow: 0px 2px 12px -1px rgba(0,0,0,0.61);
+        box-shadow: 0px 2px 12px -1px rgba(0,0,0,0.61);
       }
 
       .toolbar-white {
@@ -133,12 +135,12 @@
 
     </style>
     <div class="toolbar">
-      <paper-icon-button class="toolbar-button toolbar-white" on-tap="_zoomOut"          icon="casper-icons:minus"></paper-icon-button>
-      <paper-icon-button class="toolbar-button toolbar-white" on-tap="_zoomIn"           icon="casper-icons:plus"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-tap="_gotoPreviousPage" icon="casper-icons:arrow-left"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-tap="_gotoNextPage"     icon="casper-icons:arrow-right"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-tap="_print"            icon="casper-icons:print"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-tap="_download"         icon="casper-icons:file-pdf"></paper-icon-button>
+      <paper-icon-button class="toolbar-button toolbar-white" on-click="_zoomOut"          icon="casper-icons:minus"></paper-icon-button>
+      <paper-icon-button class="toolbar-button toolbar-white" on-click="_zoomIn"           icon="casper-icons:plus"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_gotoPreviousPage" icon="casper-icons:arrow-left"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_gotoNextPage"     icon="casper-icons:arrow-right"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_print"            icon="casper-icons:print"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_download"         icon="casper-icons:download-pdf"></paper-icon-button>
     </div>
     <div class="desktop">
       <div class="spacer"></div>

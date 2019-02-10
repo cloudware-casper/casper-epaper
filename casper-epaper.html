@@ -21,9 +21,7 @@
 <link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../casper-icons/casper-icons.html">
-<!--link rel="import" href="../casper-common-ui/casper-i18n-behavior.html"-->
 <link rel="import" href="casper-epaper-imports.html">
-<!--link rel="import" href="casper-epaper-tooltip.html"-->
 <link rel="import" href="casper-epaper-input.html">
 <link rel="import" href="casper-epaper-servertip-helper.html">
 
@@ -135,12 +133,12 @@
 
     </style>
     <div class="toolbar">
-      <paper-icon-button class="toolbar-button toolbar-white" on-click="_zoomOut"          icon="casper-icons:minus"></paper-icon-button>
-      <paper-icon-button class="toolbar-button toolbar-white" on-click="_zoomIn"           icon="casper-icons:plus"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-click="_gotoPreviousPage" icon="casper-icons:arrow-left"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-click="_gotoNextPage"     icon="casper-icons:arrow-right"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-click="_print"            icon="casper-icons:print"></paper-icon-button>
-      <paper-icon-button class="toolbar-button"               on-click="_download"         icon="casper-icons:download-pdf"></paper-icon-button>
+      <paper-icon-button class="toolbar-button toolbar-white" on-click="_zoomOut"          tooltip="Reduzir"         icon="casper-icons:minus"></paper-icon-button>
+      <paper-icon-button class="toolbar-button toolbar-white" on-click="_zoomIn"           tooltip="Ampliar"         icon="casper-icons:plus"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_gotoPreviousPage" tooltip="Página anterior" icon="casper-icons:arrow-left"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_gotoNextPage"     tooltip="Página seguinte" icon="casper-icons:arrow-right"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_print"            tooltip="Imprimir"        icon="casper-icons:print"></paper-icon-button>
+      <paper-icon-button class="toolbar-button"               on-click="_download"         tooltip="Descarregar PDF" icon="casper-icons:download-pdf"></paper-icon-button>
     </div>
     <div class="desktop">
       <div class="spacer"></div>
@@ -339,6 +337,7 @@
        * @param {Object} documentModel an object that specifies the layout and data of the document
        */
       open (documentModel) {
+        this._currentPage = 1; // # TODO goto page
         this._prepareOpenCommand(documentModel);
         this._openChapter();
       }
@@ -453,11 +452,15 @@
       }
 
       _zoomOut () {
-        this.setZoom(this.zoom * 0.8);
+        if ( this.zoom > 0.5 ) {
+          this.setZoom(this.zoom * 0.8);
+        }
       }
 
       _zoomIn () {
-        this.setZoom(this.zoom * 1.2);
+        if ( this.zoom < 2 ) {
+          this.setZoom(this.zoom * 1.2);
+        }
       }
 
       /**
@@ -602,7 +605,7 @@
             jrxml: this._document.chapters[i].jrxml,
             jsonapi: {
               // TODO extract list of relationships from the report!!!! // TODO NO TOCONLINE
-              urn: 'https://app.toconline.pt/' + this._document.chapters[i].path + '?' + ((undefined !== this._document.chapters[i].params && '' !== this._document.chapters[i].params) ? this._document.chapters[i].params : 'include=lines'),
+              urn: 'http://localhost/' + this._document.chapters[i].path + '?' + ((undefined !== this._document.chapters[i].params && '' !== this._document.chapters[i].params) ? this._document.chapters[i].params : 'include=lines'),
               prefix: null,
               user_id: null,
               entity_id: null,

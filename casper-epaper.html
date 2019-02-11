@@ -337,7 +337,7 @@
        * @param {Object} documentModel an object that specifies the layout and data of the document
        */
       open (documentModel) {
-        this._currentPage = 1; // # TODO goto page
+        this._currentPage = 1; // # TODO goto page on open /
         this._prepareOpenCommand(documentModel);
         this._openChapter();
       }
@@ -605,7 +605,7 @@
             jrxml: this._document.chapters[i].jrxml,
             jsonapi: {
               // TODO extract list of relationships from the report!!!! // TODO NO TOCONLINE
-              urn: 'http://localhost/' + this._document.chapters[i].path + '?' + ((undefined !== this._document.chapters[i].params && '' !== this._document.chapters[i].params) ? this._document.chapters[i].params : 'include=lines'),
+              urn: 'https://app.toconline.pt/' + this._document.chapters[i].path + '?' + ((undefined !== this._document.chapters[i].params && '' !== this._document.chapters[i].params) ? this._document.chapters[i].params : 'include=lines'),
               prefix: null,
               user_id: null,
               entity_id: null,

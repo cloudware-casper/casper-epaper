@@ -583,7 +583,7 @@ class CasperEpaperInput extends PolymerElement {
         if (this._initialSelection === true) {
           this._initialSelection = false;
           if (vkey === 'shift+tab') {
-            this.epaperDocument.__socket.sendKey(this.epaperDocument.documentId, vkey, 'shift');
+            this.epaperDocument.__socket.sendKey(this.epaperDocument.documentId, 'tab', 'shift');
           } else {
             this.epaperDocument.__socket.sendKey(this.epaperDocument.documentId, vkey);
           }

@@ -435,7 +435,9 @@ export class CasperEpaperServerDocument extends PolymerElement {
     this.__clearPage();
 
     if (this.documentId !== undefined && this.documentScale !== this.__sx) {
-      this.__socket.setScale(this.documentId, 1.0 * this.__sx.toFixed(2));
+      if ( false === this.loading ) {
+        this.__socket.setScale(this.documentId, 1.0 * this.__sx.toFixed(2));
+      }
       this.documentScale = this.__sx;
     }
   }
@@ -2131,13 +2133,14 @@ export class CasperEpaperServerDocument extends PolymerElement {
           if ( notification.focus === 'forward' ) {
             if ( this.epaper.nextChapter() === false ) {
               // console todo add line ??
-              
-              await this.__socket.setText(this.documentId, this.$.input._textArea.value, 'left');
+              await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
             }
             return;
           }
           if ( notification.focus === 'backwards' ) {
-            this.epaper.previousChapter();
+            if ( false == this.epaper.previousChapter() ) {
+              await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
+            }
             return;
           }
         }
@@ -2249,7 +2252,8 @@ export class CasperEpaperServerDocument extends PolymerElement {
     this.__socket.sendClick(
       this.documentId,
       parseFloat((a_event.offsetX * this.__scalePxToServer).toFixed(2)),
-      parseFloat((a_event.offsetY * this.__scalePxToServer).toFixed(2))
+      parseFloat((a_event.offsetY * this.__scalePxToServer).toFixed(2)),
+      this.$.input._textArea.value
     );
 
     if ( this.__edition ) {

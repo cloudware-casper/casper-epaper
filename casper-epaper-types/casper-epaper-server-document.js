@@ -435,6 +435,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
     this.__clearPage();
 
     if (this.documentId !== undefined && this.documentScale !== this.__sx) {
+      // [AG] - load command call already sets/sends scale, so if loading do NOT send set scale command
       if ( false === this.loading ) {
         this.__socket.setScale(this.documentId, 1.0 * this.__sx.toFixed(2));
       }
@@ -2131,9 +2132,12 @@ export class CasperEpaperServerDocument extends PolymerElement {
 
         if ( notification.focus ) {
           if ( notification.focus === 'forward' ) {
-            if ( this.epaper.nextChapter() === false ) {
-              // console todo add line ??
-              await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
+            // [AG] - no longer required on v2
+            if ( 2.0 !== this.__socket._protocol.version ) {
+              if ( this.epaper.nextChapter() === false ) {
+                // console todo add line ??
+                await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
+              }
             }
             return;
           }

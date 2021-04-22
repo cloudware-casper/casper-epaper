@@ -2142,8 +2142,11 @@ export class CasperEpaperServerDocument extends PolymerElement {
             return;
           }
           if ( notification.focus === 'backwards' ) {
-            if ( false == this.epaper.previousChapter() ) {
-              await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
+            // [AG] - no longer required on v2
+            if ( 2.0 !== this.__socket._protocol.version ) {
+              if ( false == this.epaper.previousChapter() ) {
+                await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
+              }
             }
             return;
           }

@@ -1599,8 +1599,12 @@ export class CasperEpaperServerDocument extends PolymerElement {
             this.__inputBoxDrawString = this.__message.substring(this.__r_idx);
 
             // TODO review with multipage
-            x += this.__canvas.getBoundingClientRect().left - this.parentElement.getBoundingClientRect().left;
-            y += this.__canvas.getBoundingClientRect().top - this.parentElement.getBoundingClientRect().top;
+            if ( 0 !== this.__canvas.getBoundingClientRect().left ) {
+              x += this.__canvas.getBoundingClientRect().left - this.parentElement.getBoundingClientRect().left;
+            }
+            if ( 0 !== this.__canvas.getBoundingClientRect().top ) {
+              y += this.__canvas.getBoundingClientRect().top - this.parentElement.getBoundingClientRect().top;
+            }
 
             this.$.input.alignPosition(x, y, w, h);
             this.$.input.setVisible(true);

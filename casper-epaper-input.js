@@ -222,7 +222,7 @@ class CasperEpaperInput extends PolymerElement {
   alignStyle (a_text_left, a_baseline) {
 
     // Make baseline and edge relative to input pox
-    var ratio = this.epaperDocument.__canvas.ratio;
+    var ratio = this.epaperDocument.__ratio;
     var tl = a_text_left / ratio - this._x;
     var bl = a_baseline / ratio - this._y;
     var top = this._f_top / ratio;

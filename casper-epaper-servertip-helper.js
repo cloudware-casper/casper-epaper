@@ -153,7 +153,13 @@ class CasperEpaperServertipHelper extends PolymerElement {
   async _onOverHandler () {
     if ( Math.abs(this._center_x - this._last_x) <= this.threshold &&
          Math.abs(this._center_y - this._last_y) <= this.threshold ) {
-      let response = await this.epaperDocument.app.socket.getHint(
+      let socket;
+      if ( 2.0 === this.epaper.__socket._protocol.version ) {
+        socket = this.epaperDocument.app.socket2;
+      } else {
+        socket = this.epaperDocument.app.socket;
+      }
+      let response = await socket.getHint(
         this.epaperDocument.documentId,
         this._scalePxToServer * this._center_x,
         this._scalePxToServer * this._center_y

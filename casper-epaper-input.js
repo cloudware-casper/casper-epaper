@@ -970,6 +970,10 @@ class CasperEpaperInput extends PolymerElement {
     //if (this.epaper.$.tooltip.hide !== undefined) {
     //  this.epaper.$.tooltip.hide();
     //}
+    // [AG] - don't know why the above code is disabled - but epaper v2 needs this
+    if ( 2.0 === this.epaperDocument.__socket._protocol.version ) {
+      window.app.tooltip.hide();
+    }
   }
 }
 

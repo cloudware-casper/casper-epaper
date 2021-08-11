@@ -21,7 +21,8 @@
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 import { CasperEpaperServerDocument } from './casper-epaper-types/casper-epaper-server-document.js';
 import '@polymer/iron-input/iron-input.js';
-import '@polymer/iron-icon/iron-icon.js';
+//import '@polymer/iron-icon/iron-icon.js';
+
 
 class CasperEpaperInput extends PolymerElement {
   static get template () {
@@ -111,9 +112,9 @@ class CasperEpaperInput extends PolymerElement {
     <input is="iron-input" id="textarea" tabindex="1">
     <!--/div-->
     <!--iron-autogrow-textarea id="input" tabindex="0"></iron-autogrow-textarea-->
-    <iron-icon id="dropdown_btn" on-tap="_toggleOverlay" icon="casper-icons:arrow-drop-down" rotate\$="[[overlayVisible]]"></iron-icon>
-    <iron-icon id="clear_btn" on-tap="_clearField" icon="casper-icons:clear-combo"></iron-icon>
-    <iron-icon id="edit_btn" on-tap="_toggleSubEditor" icon="casper-icons:edit-doc"></iron-icon>
+    <casper-icon id="dropdown_btn" on-tap="_toggleOverlay" icon="casper-icons:arrow-drop-down" rotate\$="[[overlayVisible]]"></casper-icon>
+    <casper-icon id="clear_btn"    on-tap="_clearField" icon="casper-icons:clear-combo"></casper-icon>
+    <casper-icon id="edit_btn"     on-tap="_toggleSubEditor" icon="casper-icons:edit-doc"></casper-icon>
     <casper-select id="select" disable-smart-filter="" search-combo="" items="[[test]]"></casper-select>
 `;
   }
@@ -971,7 +972,7 @@ class CasperEpaperInput extends PolymerElement {
     //  this.epaper.$.tooltip.hide();
     //}
     // [AG] - don't know why the above code is disabled - but epaper v2 needs this
-    if ( 2.0 === this.epaperDocument.__socket._protocol.version ) {
+    if ( 2.0 === this.epaperDocument.__socket._version ) {
       window.app.tooltip.hide();
     }
   }

@@ -2137,7 +2137,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
         if ( notification.focus ) {
           if ( notification.focus === 'forward' ) {
             // [AG] - no longer required on v2
-            if ( 2.0 !== this.__socket._protocol.version ) {
+            if ( 2.0 !== this.__socket._version ) {
               if ( this.epaper.nextChapter() === false ) {
                 // console todo add line ??
                 await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);

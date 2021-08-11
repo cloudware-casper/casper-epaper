@@ -22,6 +22,14 @@
   dependencies:
     "@polymer/polymer" "^3.x"
 
+"@cloudware-casper/casper-icons@^3.x":
+  version "3.0.7"
+  resolved "https://npm.pkg.github.com/download/@cloudware-casper/casper-icons/3.0.7/758797540c564467103fa065e88afc3f3a785dea9f944c5267882dffbe50b22b#371927b0444532a43450bd585be686b1099cf987"
+  integrity sha512-Rq9jzbYqHijIJoNLcOSplShKeENES2vaGz4JA36fPhMg7PH6ESJZAm5XEzEo7thvT8xR6zFzZXtHZ/GaCyn8HA==
+  dependencies:
+    ink-ripple alex-saunders/ink-ripple
+    lit "^2.0.0-rc.2"
+
 "@cloudware-casper/casper-notice@^1.x":
   version "1.7.1"
   resolved "https://npm.pkg.github.com/download/@cloudware-casper/casper-notice/1.7.1/3db667a8dab3883cfca3ed06cd6cb9e47307702d929127b3b4b547828dc00a08#d6d12b9e4a8836a331f43de50adbdcc987e5ca4e"
@@ -40,6 +48,11 @@
     "@cloudware-casper/casper-notice" "^1.x"
     "@polymer/polymer" "^3.0.0"
     "@vaadin/vaadin-upload" "^4.x"
+
+"@lit/reactive-element@^1.0.0-rc.2":
+  version "1.0.0-rc.2"
+  resolved "https://registry.yarnpkg.com/@lit/reactive-element/-/reactive-element-1.0.0-rc.2.tgz#f24dba16ea571a08dca70f1783bd2ca5ec8de3ee"
+  integrity sha512-cujeIl5Ei8FC7UHf4/4Q3bRJOtdTe1vpJV/JEBYCggedmQ+2P8A2oz7eE+Vxi6OJ4nc0X+KZxXnBoH4QrEbmEQ==
 
 "@polymer/app-layout@^3.0.0-pre.26":
   version "3.1.0"
@@ -161,7 +174,7 @@
   dependencies:
     "@polymer/polymer" "^3.0.0"
 
-"@polymer/iron-icon@^3.0.0", "@polymer/iron-icon@^3.0.0-pre.26", "@polymer/iron-icon@^3.x":
+"@polymer/iron-icon@^3.0.0", "@polymer/iron-icon@^3.0.0-pre.26":
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/@polymer/iron-icon/-/iron-icon-3.0.1.tgz#93211c39d8825fe4965a68419566036c1df291eb"
   integrity sha512-QLPwirk+UPZNaLnMew9VludXA4CWUCenRewgEcGYwdzVgDPCDbXxy6vRJjmweZobMQv/oVLppT2JZtJFnPxX6g==
@@ -179,7 +192,7 @@
     "@polymer/iron-iconset-svg" "^3.0.0-pre.26"
     "@polymer/polymer" "^3.0.0"
 
-"@polymer/iron-iconset-svg@^3.0.0", "@polymer/iron-iconset-svg@^3.0.0-pre.26", "@polymer/iron-iconset-svg@^3.x":
+"@polymer/iron-iconset-svg@^3.0.0", "@polymer/iron-iconset-svg@^3.0.0-pre.26":
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/@polymer/iron-iconset-svg/-/iron-iconset-svg-3.0.1.tgz#568d6e7dbc120299dae63be3600aeba0d30ddbea"
   integrity sha512-XNwURbNHRw6u2fJe05O5fMYye6GSgDlDqCO+q6K1zAnKIrpgZwf2vTkBd5uCcZwsN0FyCB3mvNZx4jkh85dRDw==
@@ -320,17 +333,6 @@
     "@polymer/paper-styles" "^3.0.0-pre.26"
     "@polymer/polymer" "^3.0.0"
 
-"@polymer/paper-fab@^3.x":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@polymer/paper-fab/-/paper-fab-3.0.1.tgz#2636359e7fb70dd5a549ed92ba9b3bdb9ff86bf8"
-  integrity sha512-LO8ckgd72MnAtC1WiPd5CFR27WC/dEuY/lOIQuHYdEjwI62+iiV7Bmr7uoQ9wvvV71qMFdMIOyq/03KklsuAzw==
-  dependencies:
-    "@polymer/iron-flex-layout" "^3.0.0-pre.26"
-    "@polymer/iron-icon" "^3.0.0-pre.26"
-    "@polymer/paper-behaviors" "^3.0.0-pre.27"
-    "@polymer/paper-styles" "^3.0.0-pre.26"
-    "@polymer/polymer" "^3.0.0"
-
 "@polymer/paper-icon-button@^3.0.0-pre.26":
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/@polymer/paper-icon-button/-/paper-icon-button-3.0.2.tgz#a1254faadc2c8dd135ce1ae33bcc161a94c31f65"
@@ -403,6 +405,11 @@
   dependencies:
     "@polymer/polymer" "^3.0.0"
     prismjs "^1.11.0"
+
+"@types/trusted-types@^1.0.1":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-1.0.6.tgz#569b8a08121d3203398290d602d84d73c8dcf5da"
+  integrity sha512-230RC8sFeHoT6sSUlRO6a8cAnclO06eeiq1QDfiv2FGCLWFvvERWgwIQD4FWqD9A69BN7Lzee4OXwoMVnnsWDw==
 
 "@vaadin/vaadin-button@^2.4.0":
   version "2.4.0"
@@ -560,6 +567,10 @@ good-listener@^1.2.2:
   dependencies:
     delegate "^3.1.2"
 
+"ink-ripple@github:alex-saunders/ink-ripple":
+  version "0.0.0"
+  resolved "https://codeload.github.com/alex-saunders/ink-ripple/tar.gz/88e4d753bba9f7b57b372c62a4517bb091c7f713"
+
 lit-element@^2.0.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/lit-element/-/lit-element-2.4.0.tgz#b22607a037a8fc08f5a80736dddf7f3f5d401452"
@@ -567,10 +578,34 @@ lit-element@^2.0.0:
   dependencies:
     lit-html "^1.1.1"
 
+lit-element@^3.0.0-rc.2:
+  version "3.0.0-rc.2"
+  resolved "https://registry.yarnpkg.com/lit-element/-/lit-element-3.0.0-rc.2.tgz#883d0b6fd7b846226d360699d1b713da5fc7e1b7"
+  integrity sha512-2Z7DabJ3b5K+p5073vFjMODoaWqy5PIaI4y6ADKm+fCGc8OnX9fU9dMoUEBZjFpd/bEFR9PBp050tUtBnT9XTQ==
+  dependencies:
+    "@lit/reactive-element" "^1.0.0-rc.2"
+    lit-html "^2.0.0-rc.3"
+
 lit-html@^1.1.1:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/lit-html/-/lit-html-1.3.0.tgz#c80f3cc5793a6dea6c07172be90a70ab20e56034"
   integrity sha512-0Q1bwmaFH9O14vycPHw8C/IeHMk/uSDldVLIefu/kfbTBGIc44KGH6A8p1bDfxUfHdc8q6Ct7kQklWoHgr4t1Q==
+
+lit-html@^2.0.0-rc.3:
+  version "2.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/lit-html/-/lit-html-2.0.0-rc.3.tgz#1c216e548630e18d3093d97f4e29563abce659af"
+  integrity sha512-Y6P8LlAyQuqvzq6l/Nc4z5/P5M/rVLYKQIRxcNwSuGajK0g4kbcBFQqZmgvqKG+ak+dHZjfm2HUw9TF5N/pkCw==
+  dependencies:
+    "@types/trusted-types" "^1.0.1"
+
+lit@^2.0.0-rc.2:
+  version "2.0.0-rc.2"
+  resolved "https://registry.yarnpkg.com/lit/-/lit-2.0.0-rc.2.tgz#724a2d621aa098001d73bf7106f3a72b7b5948ef"
+  integrity sha512-BOCuoJR04WaTV8UqTKk09cNcQA10Aq2LCcBOiHuF7TzWH5RNDsbCBP5QM9sLBSotGTXbDug/gFO08jq6TbyEtw==
+  dependencies:
+    "@lit/reactive-element" "^1.0.0-rc.2"
+    lit-element "^3.0.0-rc.2"
+    lit-html "^2.0.0-rc.3"
 
 marked@~0.3.9:
   version "0.3.19"

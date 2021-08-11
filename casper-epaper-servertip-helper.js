@@ -18,25 +18,19 @@
   -
  */
 
-import { PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { LitElement } from 'lit';
 
-class CasperEpaperServertipHelper extends PolymerElement {
-
-  static get is () {
-    return 'casper-epaper-servertip-helper';
-  }
+class CasperEpaperServertipHelper extends LitElement {
 
   static get properties () {
     return  {
       /** Mouse move threshold, movement bellow this treshold is ignored */
       threshold: {
-        type: Number,
-        value: 4
+        type: Number
       },
       /** Time the mouse has to stay in overing inside the threshold to trigger a request */
       hoveringTime: {
-        type: Number,
-        value: 500
+        type: Number
       },
       /** Parent casper-epaper element that owns the this helper */
       epaper: {
@@ -48,10 +42,16 @@ class CasperEpaperServertipHelper extends PolymerElement {
       },
       /** true to enable hint requests */
       enabled: {
-        type: Boolean,
-        value: false
+        type: Boolean
       }
     };
+  }
+
+  constructor () {
+    super();
+    this.threshold    = 4;
+    this.hoveringTime = 500;
+    this.enabled      = false;
   }
 
   connectedCallback () {
@@ -60,8 +60,6 @@ class CasperEpaperServertipHelper extends PolymerElement {
     this._center_x        = undefined;
     this._center_y        = undefined;
     this._left            = undefined;
-    this.threshold        = 4;
-    this.hoveringTime     = 500;
     this._scalePxToServer = 1.0;
     this._timer           = undefined;
   }
@@ -154,7 +152,7 @@ class CasperEpaperServertipHelper extends PolymerElement {
     if ( Math.abs(this._center_x - this._last_x) <= this.threshold &&
          Math.abs(this._center_y - this._last_y) <= this.threshold ) {
       let socket;
-      if ( 2.0 === this.epaper.__socket._protocol.version ) {
+      if ( 2.0 === this.epaper.__socket._version ) {
         socket = this.epaperDocument.app.socket2;
       } else {
         socket = this.epaperDocument.app.socket;
@@ -172,4 +170,4 @@ class CasperEpaperServertipHelper extends PolymerElement {
   }
 }
 
-window.customElements.define(CasperEpaperServertipHelper.is, CasperEpaperServertipHelper);
+window.customElements.define('casper-epaper-servertip-helper', CasperEpaperServertipHelper);

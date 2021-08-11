@@ -18,117 +18,108 @@
   -
  */
 
-import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
-import { CasperEpaperServerDocument } from './casper-epaper-types/casper-epaper-server-document.js';
-import '@polymer/iron-input/iron-input.js';
-//import '@polymer/iron-icon/iron-icon.js';
+import { LitElement, html, css } from 'lit';
 
+class CasperEpaperInput extends LitElement {
 
-class CasperEpaperInput extends PolymerElement {
-  static get template () {
+  static styles = css`
+    :host {
+      display: none;
+      position: absolute;
+    }
+
+    casper-icon {
+      position: absolute;
+      cursor: pointer;
+      padding: 1px;
+      margin: 0px;
+      transition: transform 300ms;
+      fill: var(--dark-theme-background-color);
+    }
+
+    casper-icon[rotate] {
+      transform: rotate(180deg);
+    }
+
+    casper-icon:hover {
+      fill: var(--primary-color);
+    }
+
+    ::-ms-clear {
+      display: none;
+    }
+
+    ::selection {
+      background: #d0ecf0;
+    }
+
+    #textarea {
+      border: none;
+      display: block;
+      position: absolute;
+      padding: 0px;
+      margin: 0px;
+      outline: none;
+      background-color: rgba(0, 0, 0, 0);
+    }
+
+    #clear_btn {
+      stroke: #D0011B;
+      stroke-width: 1.5;
+      fill: #EE9392;
+      fill-opacity: 0.55;
+    }
+
+    #clear_btn:hover {
+      stroke: #555;
+      stroke-width: 2.5;
+      fill-opacity: 0.9;
+    }
+
+    #clear_btn:active {
+      stroke: #555;
+      stroke-width: 2.5;
+      fill: #B94F4F;
+      fill-opacity: 1;
+    }
+
+    #edit_btn {
+      fill: var(--dark-primary-color);
+    }
+
+    #edit_btn:hover {
+      fill: var(--primary-color);
+      }
+
+/*  #input {
+      -ms-overflow-style: -ms-autohiding-scrollbar;
+    }
+
+    #textarea {
+      resize: none;
+      background-color: rgba(0, 0, 0, 0);
+      border-color: rgba(0, 0, 0, 0);
+      overflow: auto;
+    }*/
+  `;
+
+  render () {
     return html`
-    <style>
-      :host {
-        display: none;
-        position: absolute;
-      }
-
-      iron-icon {
-        position: absolute;
-        cursor: pointer;
-        padding: 1px;
-        margin: 0px;
-        transition: transform 300ms;
-        fill: var(--dark-theme-background-color);
-      }
-
-      iron-icon[rotate] {
-        transform: rotate(180deg);
-      }
-
-      iron-icon:hover {
-        fill: var(--primary-color);
-      }
-
-      ::-ms-clear {
-        display: none;
-      }
-
-      ::selection {
-        background: #d0ecf0;
-      }
-
-      #textarea {
-        border: none;
-        display: block;
-        position: absolute;
-        padding: 0px;
-        margin: 0px;
-        outline: none;
-        background-color: rgba(0, 0, 0, 0);
-      }
-
-      #clear_btn {
-        stroke: #D0011B;
-        stroke-width: 1.5;
-        fill: #EE9392;
-        fill-opacity: 0.55;
-      }
-
-      #clear_btn:hover {
-        stroke: #555;
-        stroke-width: 2.5;
-        fill-opacity: 0.9;
-      }
-
-      #clear_btn:active {
-        stroke: #555;
-        stroke-width: 2.5;
-        fill: #B94F4F;
-        fill-opacity: 1;
-      }
-
-      #edit_btn {
-        fill: var(--dark-primary-color);
-      }
-
-      #edit_btn:hover {
-        fill: var(--primary-color);
-      }
-
-/*    #input {
-        -ms-overflow-style: -ms-autohiding-scrollbar;
-      }
-
-      #textarea {
-        resize: none;
-        background-color: rgba(0, 0, 0, 0);
-        border-color: rgba(0, 0, 0, 0);
-        overflow: auto;
-      }*/
-
-    </style>
-    <!--div id="input"-->
-    <input is="iron-input" id="textarea" tabindex="1">
-    <!--/div-->
-    <!--iron-autogrow-textarea id="input" tabindex="0"></iron-autogrow-textarea-->
-    <casper-icon id="dropdown_btn" on-tap="_toggleOverlay" icon="casper-icons:arrow-drop-down" rotate\$="[[overlayVisible]]"></casper-icon>
-    <casper-icon id="clear_btn"    on-tap="_clearField" icon="casper-icons:clear-combo"></casper-icon>
-    <casper-icon id="edit_btn"     on-tap="_toggleSubEditor" icon="casper-icons:edit-doc"></casper-icon>
-    <casper-select id="select" disable-smart-filter="" search-combo="" items="[[test]]"></casper-select>
-`;
-  }
-
-  static get is () {
-    return 'casper-epaper-input';
+      <!--div id="input"-->
+      <input id="textarea" tabindex="1">
+      <!--/div-->
+      <casper-icon id="dropdown_btn" on-tap="_toggleOverlay" icon="casper-icons:arrow-drop-down" rotate\$="[[overlayVisible]]"></casper-icon>
+      <casper-icon id="clear_btn" on-tap="_clearField" icon="casper-icons:clear-combo"></casper-icon>
+      <casper-icon id="edit_btn" on-tap="_toggleSubEditor" icon="casper-icons:edit-doc"></casper-icon>
+      <!--casper-select id="select" disable-smart-filter="" search-combo="" items="[[test]]"></casper-select-->
+    `;
   }
 
   static get properties () {
     return {
       /** True when there is an open overlay */
       overlayVisible: {
-        type: Boolean,
-        value: false
+        type: Boolean
       },
       /** Parent casper-epaper element that owns this helper */
       epaper: {
@@ -137,20 +128,25 @@ class CasperEpaperInput extends PolymerElement {
     };
   }
 
-  ready () {
-    super.ready();
+  constructor () {
+    super();
+
+    this.overlayVisible = false;
 
     this.test = [];
 
     //this._input          = this.$.input;
     this._binding = undefined;
-    this._textArea = this.$.textarea;//this.$.input.$.textarea;
+    //this._textArea = this.$.textarea;//this.$.input.$.textarea;
     //this.$.date.inputBox = this.$.textarea;//this.$.input.$.textarea;
     this._visible = true;
-    this.setVisible(false);
-    this._select = this.$.select;
+    //this.setVisible(false);
+    //this._select = this.$.select;
     // TODO this.$.combo.setPositionTarget(this);
 
+    /*
+       TODO do we really meed these listners here, or just realy on input
+    */
     this.addEventListener('keypress', e => this._onKeypress(e));
     this.addEventListener('keydown', e => this._onKeyDown(e));
     //this.addEventListener('mousedown', e => this._onMouseDown(e));
@@ -173,6 +169,13 @@ class CasperEpaperInput extends PolymerElement {
     this._clearModel();
   }
 
+  firstUpdated () {
+    this._textArea     = this.renderRoot.getElementById('textarea');
+    this._dropdown_btn = this.renderRoot.getElementById('dropdown_btn');
+    this._edit_btn     = this.renderRoot.getElementById('edit_btn');
+    this._clear_btn    = this.renderRoot.getElementById('clear_btn');
+  }
+
   /**
    * Show or hide the input control
    *
@@ -184,8 +187,8 @@ class CasperEpaperInput extends PolymerElement {
         this.style.display = 'inline-block';
       } else {
         this.style.display = 'none';
-        this.$.dropdown_btn.style.display = 'none';
-        this.$.edit_btn.style.display = 'none';
+        this._dropdown_btn.style.display = 'none';
+        this._edit_btn.style.display = 'none';
       }
       this._visible = visible;
     }
@@ -245,9 +248,9 @@ class CasperEpaperInput extends PolymerElement {
     // TODO this.$.combo.setVisible(false);
     //this.$.date.setVisible(false);
     if (hideButtons) {
-      this.$.dropdown_btn.style.display = 'none';
-      this.$.edit_btn.style.display = 'none';
-      this.$.clear_btn.style.display = 'nome';
+      this._dropdown_btn.style.display = 'none';
+      this._edit_btn.style.display = 'none';
+      this._clear_btn.style.display = 'none';
     }
   }
 
@@ -320,44 +323,44 @@ class CasperEpaperInput extends PolymerElement {
     width = parseInt(this.style.width);
     height = parseInt(this.style.height);
 
-    this.$.dropdown_btn.style.display = 'none';
-    this.$.dropdown_btn.style.padding = '0px';
-    this.$.dropdown_btn.style.height = btn_size + 'px';
-    this.$.dropdown_btn.style.width = btn_size + 'px';
-    this.$.dropdown_btn.style.top = ((height - btn_size) / 2) + 'px';
-    this.$.dropdown_btn.style.left = (width - btn_size) + 'px';
+    this._dropdown_btn.style.display = 'none';
+    this._dropdown_btn.style.padding = '0px';
+    this._dropdown_btn.style.height = btn_size + 'px';
+    this._dropdown_btn.style.width = btn_size + 'px';
+    this._dropdown_btn.style.top = ((height - btn_size) / 2) + 'px';
+    this._dropdown_btn.style.left = (width - btn_size) + 'px';
 
-    this.$.clear_btn.style.display = 'none';
-    this.$.clear_btn.style.padding = '0px';
-    this.$.clear_btn.style.height = btn_size + 'px';
-    this.$.clear_btn.style.width = btn_size + 'px';
-    this.$.clear_btn.style.top = ((height - btn_size) / 2) + 'px';
-    this.$.clear_btn.style.left = (width - btn_size) + 'px';
+    this._clear_btn.style.display = 'none';
+    this._clear_btn.style.padding = '0px';
+    this._clear_btn.style.height = btn_size + 'px';
+    this._clear_btn.style.width = btn_size + 'px';
+    this._clear_btn.style.top = ((height - btn_size) / 2) + 'px';
+    this._clear_btn.style.left = (width - btn_size) + 'px';
 
     edit_btn_size = Math.floor(18 * this.epaperDocument.zoom);
-    this.$.edit_btn.style.display = 'none'; // 'inline';
-    this.$.edit_btn.style.padding = '0px';
-    this.$.edit_btn.style.height = edit_btn_size + 'px';
-    this.$.edit_btn.style.width = edit_btn_size + 'px';
-    this.$.edit_btn.style.top = ((height - edit_btn_size) / 2) + 'px';
-    this.$.edit_btn.style.left = (-edit_btn_size) + 'px';
+    this._edit_btn.style.display = 'none'; // 'inline';
+    this._edit_btn.style.padding = '0px';
+    this._edit_btn.style.height = edit_btn_size + 'px';
+    this._edit_btn.style.width = edit_btn_size + 'px';
+    this._edit_btn.style.top = ((height - edit_btn_size) / 2) + 'px';
+    this._edit_btn.style.left = (-edit_btn_size) + 'px';
 
     switch (this._mode) {
       case 'c': // Client combo
       case 'l': // Ledger mode
-        this.$.dropdown_btn.icon = 'casper-icons:arrow-drop-down';
-        //this.$.dropdown_btn.style.display = 'none';
+        this._dropdown_btn.icon = 'casper-icons:arrow-drop-down';
+        //this._dropdown_btn.style.display = 'none';
         this._textArea.style.width = (width - btn_size) + 'px';
         break;
       case 'd': // Date
-        this.$.dropdown_btn.icon = 'casper-icons:date-range'
-        this.$.dropdown_btn.style.display = 'inline';
+        this._dropdown_btn.icon = 'casper-icons:date-range'
+        this._dropdown_btn.style.display = 'inline';
         this._textArea.style.width = (width - btn_size) + 'px';
         break;
       case 'R': // Radio
       default:  // Normal mode the default
-        this.$.dropdown_btn.style.display = 'none';
-        this.$.edit_btn.style.display = 'none';
+        this._dropdown_btn.style.display = 'none';
+        this._edit_btn.style.display = 'none';
         this._textArea.style.width = (width) + 'px';
         break;
     }
@@ -396,9 +399,9 @@ class CasperEpaperInput extends PolymerElement {
     this._textArea.selectionStart = undefined;
     this._textArea.selectionEnd = undefined;
 
-    this._select.items = ['123', '12334', 'abc'];
+    //this._select.items = ['123', '12334', 'abc'];
 
-    // console.log(`setCombolistQuery = ${query}`);
+    console.log(`setCombolistQuery = ${query}`);
     // TODO this.$.combo.clearModel();
     // TODO this.$.combo.$.spinner.active = true;
   }
@@ -641,9 +644,9 @@ class CasperEpaperInput extends PolymerElement {
     // aqui
     if (displayValue.length !== 0 && this._binding !== undefined && this._binding.attachment !== undefined &&
       this._binding.attachment.allowClear === true) {
-      this.$.clear_btn.style.display = 'inline';
+      this._clear_btn.style.display = 'inline';
     } else {
-      this.$.dropdown_btn.style.display = 'inline';
+      this._dropdown_btn.style.display = 'inline';
     }
   }
 
@@ -935,10 +938,10 @@ class CasperEpaperInput extends PolymerElement {
     var mid_x, mid_y, bbi, bbc;
 
     bbc = this.epaper.$.canvas.getBoundingClientRect();
-    if (this.$.input === undefined) {
+    if ( this._textArea === undefined ) {
       return; // TODO
     }
-    bbi = this.$.input.getBoundingClientRect();
+    bbi = this._textArea.getBoundingClientRect();
     mid_x = bbc.left + left + width / 2;
     mid_y = bbc.top + top + height / 2;
 
@@ -978,4 +981,4 @@ class CasperEpaperInput extends PolymerElement {
   }
 }
 
-window.customElements.define(CasperEpaperInput.is, CasperEpaperInput);
+window.customElements.define('casper-epaper-input', CasperEpaperInput);

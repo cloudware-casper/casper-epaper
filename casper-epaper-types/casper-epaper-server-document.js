@@ -40,10 +40,6 @@ export class CasperEpaperServerDocument extends PolymerElement {
   static get SIZE_INDEX ()      { return 2;        }
   static get FONT_NAME_INDEX () { return 4;        }
 
-  static get is () {
-    return 'casper-epaper-server-document';
-  }
-
   static get properties () {
     return {
       /**
@@ -2303,4 +2299,4 @@ export class CasperEpaperServerDocument extends PolymerElement {
 
 }
 
-customElements.define(CasperEpaperServerDocument.is, CasperEpaperServerDocument);
+customElements.define('casper-epaper-server-document', CasperEpaperServerDocument);

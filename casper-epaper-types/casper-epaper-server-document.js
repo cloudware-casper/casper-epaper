@@ -18,13 +18,13 @@
   -
  */
 
+import { LitElement, html, css } from 'lit';
+
 import '../casper-epaper-input.js';
 import '../casper-epaper-servertip-helper.js';
 import '@cloudware-casper/casper-icons/casper-icon-button.js';
-import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
-import { afterNextRender } from '@polymer/polymer/lib/utils/render-status.js';
 
-export class CasperEpaperServerDocument extends PolymerElement {
+export class CasperEpaperServerDocument extends LitElement {
 
   /*
    * Constants
@@ -100,43 +100,43 @@ export class CasperEpaperServerDocument extends PolymerElement {
     };
   }
 
-  static get template () {
+  static styles = css`
+    :host {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    #canvas-container {
+      height: 100%;
+    }
+
+    .line-menu-button {
+      padding: 6px;
+      margin-left: 4px;
+      max-width: 28px;
+      max-height: 28px;
+      border-radius: 50%;
+      -webkit-box-shadow: 0px 1px 6px -1px rgba(0, 0, 0, 0.61);
+      -moz-box-shadow:    0px 1px 6px -1px rgba(0, 0, 0, 0.61);
+      box-shadow:         0px 1px 6px -1px rgba(0, 0, 0, 0.61);
+    }
+
+    .delete {
+      --casper-icon-button-color: white;
+      --casper-icon-button-background-color: var(--status-red);
+    }
+  `;
+
+  render () {
     return html`
-    <style>
-      :host {
-        height: 100%;
-        display: flex;
-        justify-content: center;
-      }
-
-      #canvas-container {
-        height: 100%;
-      }
-
-      .line-menu-button {
-        padding: 6px;
-        margin-left: 4px;
-        max-width: 28px;
-        max-height: 28px;
-        border-radius: 50%;
-        -webkit-box-shadow: 0px 1px 6px -1px rgba(0, 0, 0, 0.61);
-        -moz-box-shadow:    0px 1px 6px -1px rgba(0, 0, 0, 0.61);
-        box-shadow:         0px 1px 6px -1px rgba(0, 0, 0, 0.61);
-      }
-
-      .delete {
-        --casper-icon-button-color: white;
-        --casper-icon-button-background-color: var(--status-red);
-      }
-
-    </style>
-
+    
     <div id="canvas-container">
       <canvas id="canvas"></canvas>
     </div>
 
-    <casper-epaper-input id="input" epaper-document="[[__epaperDocument]]"></casper-epaper-input>
-    <casper-epaper-servertip-helper id="servertip" epaper-document="[[__epaperDocument]]"></casper-epaper-servertip-helper>
+    <casper-epaper-input id="input" epaper-document=${this.__epaperDocument}></casper-epaper-input>
+    <casper-epaper-servertip-helper id="servertip" epaper-document=${this.__epaperDocument}></casper-epaper-servertip-helper>
     <slot name="casper-epaper-line-menu">
     </slot>
     <div id="default-context-menu" class="context-menu" style="display: none;">
@@ -146,8 +146,8 @@ export class CasperEpaperServerDocument extends PolymerElement {
     `;
   }
 
-  ready () {
-    super.ready();
+  constructor () {
+    super();
 
     this.__epaperDocument   = this;
     this.__scrollContainer  = document.getElementById(this.scroller);
@@ -162,52 +162,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
     this.__app              = app;
     this.__updateAssetsUrlFromSession();
 
-    afterNextRender(this, () => {
-
-      const contextMenuSlotElements = this.epaper.__fetchAssignedElementsRecursively(this.shadowRoot.querySelector('slot[name="casper-epaper-line-menu"]'));
-
-      this.__contextMenuIndex = -1;
-      this.__contextMenu = contextMenuSlotElements && contextMenuSlotElements.length > 0
-        ? contextMenuSlotElements.shift()
-        : this.$['default-context-menu'];
-
-      this.__resetRenderState();
-      this.__resetCommandData();
-
-      this._is_socket_open = false;
-
-      // Variables to save the object context
-      this._saved_idx         = 0.0;
-      this._saved_draw_string = '';
-      this.__inputBoxDrawString = undefined;
-
-      // ... connect widgets ...
-      this.$.input.epaper           = this;
-      this.$.servertip.epaper       = this;
-      this.$.servertip.input        = this.$.input;
-
-      this.__edition = false;
-      this.__canvas.contentEditable = false;
-
-      this._background_color  = '#FFFFFF';
-      this._normal_background = '#FFFFFF';
-
-      // TODO remove this
-      if ( this.__masteM_doc_right_margin !== undefined ) {
-        this.__rightMmargin = this.__masteM_doc_right_margin;
-      }
-
-      this.__canvas.addEventListener('mousemove', event => this._moveHandler(event));
-      this.__canvas.addEventListener('mousedown', event => this._mouseDownHandler(event));
-      this.__canvas.addEventListener('mouseup'  , event => this._mouseUpHandler(event));
-      this.__app.addEventListener('casper-page-changed', (e) => this.__resetCommandData(true));
-      this.__app.addEventListener('casper-session-updated', (e) => {
-        this.__updateAssetsUrlFromSession();
-        this.__resetCommandData(true);
-      });
-      this.__socket.addEventListener('casper-disconnected', (e) => this.__resetCommandData(true));
-      document.fonts.onloadingdone = (fontFaceSetEvent) => this._repaintPage();
-    });
+    this._widgetCache = new Map();
 
     // Canvas.
     this.__gridMajor       = 0.0;
@@ -215,22 +170,76 @@ export class CasperEpaperServerDocument extends PolymerElement {
     this.__backgroundColor = '#FFF';
     this.__pageWidth       = 595.0;
     this.__pageHeight      = 842.0;
-    this.__canvas          = this.$.canvas;
+  }
+
+  connectedCallback () {
+    super.connectedCallback();
+    this._deactivateContextMenu();
+  }
+
+  firstUpdated () {
+
+    // # TODO check if normal default slot pattens is possible
+    const contextMenuSlotElements = this.epaper.__fetchAssignedElementsRecursively(this.shadowRoot.querySelector('slot[name="casper-epaper-line-menu"]'));
+    this.__contextMenuIndex = -1;
+    this.__contextMenu = contextMenuSlotElements && contextMenuSlotElements.length > 0
+        ? contextMenuSlotElements.shift()
+        : this.renderRoot.getElementById('default-context-menu');
+
+    this._is_socket_open = false;
+
+    // Grab pointers to DOM elements
+    this.__canvas         = this.renderRoot.getElementById('canvas');
+    this._input           = this.renderRoot.getElementById('input');
+    this._servertip       = this.renderRoot.getElementById('servertip');
+    this._canvasContainer = this.renderRoot.getElementById('canvas-container');
+
+    // Variables to save the object context
+    this._saved_idx         = 0.0;
+    this._saved_draw_string = '';
+    this.__inputBoxDrawString = undefined;
+
     this.__canvasContext   = this.__canvas.getContext('2d', { alpha: false });
     this.__canvasWidth     = this.__canvas.width;
     this.__canvasHeight    = this.__canvas.height;
     this.__initiaPointer   = this.__canvas.style.cursor;
     this.__canvasContext.globalCompositeOperation = 'copy';
 
+      // ... connect widgets ...
+    this._input.epaper     = this;
+    this._input.epaperDocument = this;
+    this._servertip.epaper = this;
+    this._servertip.input  = this._input;
+    this._servertip.epaperDocument = this; // Sooo much duplication bros
+
+    this.__edition = false;
+    this.__canvas.contentEditable = false;
+
+    this._background_color  = '#FFFFFF';
+    this._normal_background = '#FFFFFF';
+
+    this.__resetRenderState();
+    this.__resetCommandData();
     this.__setupPixelRatio();
     this.__setupScale();
     this.__zoomChanged();
     this.__clearPage();
-  }
 
-  connectedCallback () {
-    super.connectedCallback();
-    this._deactivateContextMenu();
+    // TODO remove this
+    if ( this.__masteM_doc_right_margin !== undefined ) {
+      this.__rightMmargin = this.__masteM_doc_right_margin;
+    }
+
+    this.__canvas.addEventListener('mousemove', event => this._moveHandler(event));
+    this.__canvas.addEventListener('mousedown', event => this._mouseDownHandler(event));
+    this.__canvas.addEventListener('mouseup'  , event => this._mouseUpHandler(event));
+    this.__app.addEventListener('casper-page-changed', (e) => this.__resetCommandData(true));
+    this.__app.addEventListener('casper-session-updated', (e) => {
+      this.__updateAssetsUrlFromSession();
+      this.__resetCommandData(true);
+    });
+    this.__socket.addEventListener('casper-disconnected', (e) => this.__resetCommandData(true));
+    document.fonts.onloadingdone = (fontFaceSetEvent) => this._repaintPage();  
   }
 
   //***************************************************************************************//
@@ -482,8 +491,8 @@ export class CasperEpaperServerDocument extends PolymerElement {
     this.loading = true;
 
     this.__inputBoxDrawString = undefined;
-    this.$.servertip.enabled = false;
-    this.$.input.setVisible(false);
+    this._servertip.enabled = false;
+    this._input.setVisible(false);
     this.__hideWidgets(true);
     this.__resetScroll();
     this.__nextPage  = pageNumber || 1;
@@ -509,9 +518,9 @@ export class CasperEpaperServerDocument extends PolymerElement {
 
       if (isNaN(this.__pageHeight) || this.__pageHeight < 0) {
         this.__pageHeight = 4000;
-        this.$['canvas-container'].style.overflow = 'auto';
+        this._canvasContainer.style.overflow = 'auto';
       } else {
-        this.$['canvas-container'].style.overflow = '';
+        this._canvasContainer.style.overflow = '';
       }
 
       this.__rightMmargin = response.page.margins.right;
@@ -548,7 +557,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
     this._repaintPage();
 
     this.__loading = false;
-    this.$.servertip.enabled = true;
+    this._servertip.enabled = true;
     this.loading = false;
     return true;
   }
@@ -558,7 +567,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
    */
   __hideWidgets (hideInputButtons) {
     this._deactivateContextMenu();
-    this.$.input.hideOverlays(hideInputButtons);
+    this._input.hideOverlays(hideInputButtons);
   }
 
   /**
@@ -913,7 +922,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
 
   __adjustScroll () {
     if ( this.__scrollContainer ) {
-      let inputCr = this.$.input.getBoundingClientRect();
+      let inputCr = this._input.getBoundingClientRect();
       let leftEdge, rightEdge, topEdge, bottomEdge;
 
       /*if ( this.iframe ) {
@@ -1414,7 +1423,16 @@ export class CasperEpaperServerDocument extends PolymerElement {
           option = this.__message[this.__r_idx];
           this.__r_idx++;
           this.__canvasContext.save();
-          if ( option === 'c') {  // Configure editor
+          if ( option === 'a' ) { // attach widget in epaper 2.0
+            try {
+              const binding = JSON.parse(this.__message.substring(4, this.__message.length -1));
+              this._editor = this._attachEditorWidget(binding);
+            } catch (error) {
+              console.error(`Invalid binding with ${error}`);
+              // TODO how to show errors and recover
+            }
+            this.__r_idx += this.__message.length - 4;
+          } else if ( option === 'c') {  // Configure editor
 
             // ... clear the sub document variables ...
             this._sub_document_uri   = undefined;
@@ -1435,13 +1453,13 @@ export class CasperEpaperServerDocument extends PolymerElement {
                 this.__r_idx += w;
                 console.log("Open JRXML: " + this._sub_document_jrxml)
               }
-              this.$.input.setMode(edit_mode);
+              this._input.setMode(edit_mode);
               this.__r_idx += 1; // 't'
               break;
 
             case 't':  // Text ( default )
 
-              this.$.input.setMode(edit_mode);
+              this._input.setMode(edit_mode);
 
               this.__r_idx += 1; // 't'
               break;
@@ -1451,10 +1469,10 @@ export class CasperEpaperServerDocument extends PolymerElement {
               if ( ',' === this.__message[this.__r_idx] ) {
                 this.__r_idx++;
                 w = this.__getDouble();
-                this.$.input.setMode(edit_mode);
+                this._input.setMode(edit_mode);
                 this.__r_idx += w;
               } else {
-                this.$.input.setMode(edit_mode);
+                this._input.setMode(edit_mode);
               }
               this.__r_idx++;
               break;
@@ -1464,10 +1482,10 @@ export class CasperEpaperServerDocument extends PolymerElement {
               if ( ',' === this.__message[this.__r_idx] ) {
                   this.__r_idx++;
                   w = this.__getDouble();
-                  this.$.input.setMode(edit_mode);
+                  this._input.setMode(edit_mode);
                   this.__r_idx += w;
               } else {
-                this.$.input.setMode(edit_mode);
+                this._input.setMode(edit_mode);
               }
               this.__r_idx++;
               break;
@@ -1479,7 +1497,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
                 t2 = this.__message.substring(this.__r_idx, this.__r_idx + w);
                 this.__r_idx += w + 1;
                 try {
-                  this.$.input.setCasperBinding(JSON.parse(t2));
+                  this._input.setCasperBinding(JSON.parse(t2));
                 } catch (err) {
                   console.log("*** JSON error in combo box config!!1");
                 }
@@ -1529,9 +1547,9 @@ export class CasperEpaperServerDocument extends PolymerElement {
                   t3 = undefined;
                 }
 
-                this.$.input.setMode(edit_mode);
-                this.$.input.setDisplayFields(fields);
-                this.$.input.setModelFromJson(t2,t3);
+                this._input.setMode(edit_mode);
+                this._input.setDisplayFields(fields);
+                this._input.setModelFromJson(t2,t3);
                 this.__r_idx++;
               }
               break;
@@ -1545,7 +1563,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
               w  = this.__getDouble();
               t2 =this.__message.substring(this.__r_idx, this.__r_idx + w);   // Array with current and possible values
               this.__r_idx += w + 1; // +1 -> ';''
-              this.$.input.setMode(edit_mode);
+              this._input.setMode(edit_mode);
               break;
 
             case 'C': // 'C'[,<length>,<uri>,<length>,<jrxml>] Combos server side, IVAS, Rubricas, Centros de Custo
@@ -1560,14 +1578,14 @@ export class CasperEpaperServerDocument extends PolymerElement {
                 this._sub_document_jrxml = this.__message.substring(this.__r_idx, this.__r_idx + w);
                 this.__r_idx += w;
               }
-              this.$.input.setMode(edit_mode);
+              this._input.setMode(edit_mode);
 
               this.__r_idx += 1;
               break;
 
             case 'l':  // 'l' Combo that searches on a ledger tree
 
-              this.$.input.setMode(edit_mode);
+              this._input.setMode(edit_mode);
 
 
               let fields = [];
@@ -1578,7 +1596,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
 
                 //console.log("Combo FIELDS: " + fields);
               }
-              this.$.input.setDisplayFields(fields);
+              this._input.setDisplayFields(fields);
               this.__r_idx += w + 1;
               break;
 
@@ -1602,8 +1620,8 @@ export class CasperEpaperServerDocument extends PolymerElement {
               y += this.__canvas.getBoundingClientRect().top - this.parentElement.getBoundingClientRect().top;
             }
 
-            this.$.input.alignPosition(x, y, w, h);
-            this.$.input.setVisible(true);
+            this._input.alignPosition(x, y, w, h);
+            this._input.setVisible(true);
 
             this.__updateContextMenu(y + h / 2);
 
@@ -1626,11 +1644,11 @@ export class CasperEpaperServerDocument extends PolymerElement {
               w = this.__getDouble();
               let value = this.__message.substring(this.__r_idx, this.__r_idx + w);
               this.__r_idx += w + 1; // +1 -> '}'
-              this.$.input.setValue(id, value);
+              this._input.setValue(id, value);
 
             } else {
               w = this.__getDouble();
-              this.$.input.setValue(this.__message.substring(this.__r_idx, this.__r_idx + w));
+              this._input.setValue(this.__message.substring(this.__r_idx, this.__r_idx + w));
               this.__r_idx += w;
             }
 
@@ -1638,8 +1656,8 @@ export class CasperEpaperServerDocument extends PolymerElement {
             this._savePaintContext();
             this.__paintString(this.__inputBoxDrawString);
             this._restorePaintContext();
-            this.$.input.alignStyle(x,y,h);
-            this.$.input.grabFocus();
+            this._input.alignStyle(x,y,h);
+            this._input.grabFocus();
             this.__r_idx += 1;
             this.__adjustScroll();
 
@@ -1675,27 +1693,27 @@ export class CasperEpaperServerDocument extends PolymerElement {
 
               let json = this.__message.substring(this.__r_idx, this.__r_idx + w);
 
-              //this.$.input.setModelFromJson(undefined, json);
-              //this.$.input.autoSizeOverlay(this.$.input.style.width);
+              //this._input.setModelFromJson(undefined, json);
+              //this._input.autoSizeOverlay(this._input.style.width);
 
               //console.log("JSON: " + json);
 
               this.__r_idx += w + 1;
             } else {
-              //this.$.input.setModelFromJson(undefined, '[]');
-              //this.$.input.autoSizeOverlay(this.$.input.style.width);
+              //this._input.setModelFromJson(undefined, '[]');
+              //this._input.autoSizeOverlay(this._input.style.width);
             }
 
           } else if ( option === 'f' ) { // ... finish or stop the editor ...
 
-            this.$.input.setCasperBinding(undefined);
+            this._input.setCasperBinding(undefined);
             this.__inputBoxDrawString = undefined;
             this.__r_idx += 1;
 
             // ... clear the sub document variables ...
             this._sub_document_uri   = undefined;
             this._sub_document_jrxml = undefined;
-          } else if ( option == 'b' ) {
+          } else if ( option === 'b' ) {
 
             this.__r_idx += 1;
 
@@ -1712,7 +1730,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
             h  = this.__getDouble() / s;
             w  = this.__getDouble();
             t1 = this.__message.substring(this.__r_idx, this.__r_idx + w);
-            this.$.input.serverTooltipUpdate(x, y, w, h, t1);
+            this._input.serverTooltipUpdate(x, y, w, h, t1);
             this.__r_idx += w + 1;
           }
 
@@ -1956,16 +1974,16 @@ export class CasperEpaperServerDocument extends PolymerElement {
         case 'f':
           if ( 'm' == this.__message[this.__r_idx] ) {
               this.__r_idx++;
-              this.$.input._f_flags               = this.__getDouble();
-              this.$.input._f_top                 = this.__getDouble();
-              this.$.input._f_ascent              = this.__getDouble();
-              this.$.input._f_descent             = this.__getDouble();
-              this.$.input._f_bottom              = this.__getDouble();
-              this.$.input._f_leading             = this.__getDouble();
-              this.$.input._f_avg_char_width      = this.__getDouble();
-              this.$.input._f_max_char_width      = this.__getDouble();
-              this.$.input._f_underline_thickness = this.__getDouble();
-              this.$.input._f_underline_position  = this.__getDouble();
+              this._input._f_flags               = this.__getDouble();
+              this._input._f_top                 = this.__getDouble();
+              this._input._f_ascent              = this.__getDouble();
+              this._input._f_descent             = this.__getDouble();
+              this._input._f_bottom              = this.__getDouble();
+              this._input._f_leading             = this.__getDouble();
+              this._input._f_avg_char_width      = this.__getDouble();
+              this._input._f_max_char_width      = this.__getDouble();
+              this._input._f_underline_thickness = this.__getDouble();
+              this._input._f_underline_position  = this.__getDouble();
           } else {
               this._font_mask = this.__getDouble();
               this.fontSpec[CasperEpaperServerDocument.SIZE_INDEX]   = Math.round(this.__getDouble());
@@ -2136,7 +2154,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
             if ( 2.0 !== this.__socket._version ) {
               if ( this.epaper.nextChapter() === false ) {
                 // console todo add line ??
-                await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
+                await this.__socket.setTextT(this.documentId, this._input._textArea.value, null, true);
               }
             }
             return;
@@ -2145,7 +2163,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
             // [AG] - no longer required on v2
             if ( 2.0 !== this.__socket._protocol.version ) {
               if ( false == this.epaper.previousChapter() ) {
-                await this.__socket.setTextT(this.documentId, this.$.input._textArea.value, null, true);
+                await this.__socket.setTextT(this.documentId, this._input._textArea.value, null, true);
               }
             }
             return;
@@ -2260,11 +2278,11 @@ export class CasperEpaperServerDocument extends PolymerElement {
       this.documentId,
       parseFloat((a_event.offsetX * this.__scalePxToServer).toFixed(2)),
       parseFloat((a_event.offsetY * this.__scalePxToServer).toFixed(2)),
-      this.$.input._textArea.value
+      this._input._textArea.value
     );
 
     if ( this.__edition ) {
-      this.$.input.grabFocus();
+      this._input.grabFocus();
     }
   }
 
@@ -2272,7 +2290,7 @@ export class CasperEpaperServerDocument extends PolymerElement {
    * @brief Creates the handler that listens to mouse movements
    */
   _moveHandler (a_event) {
-    if ( this.$.input.overlayVisible ) {
+    if ( this._input.overlayVisible ) {
       return;
     }
 
@@ -2280,8 +2298,8 @@ export class CasperEpaperServerDocument extends PolymerElement {
       return;
     }
 
-    if ( this.$.servertip ) {
-      this.$.servertip.onMouseMove(a_event.offsetX, a_event.offsetY, this.__scalePxToServer);
+    if ( this._servertip ) {
+      this._servertip.onMouseMove(a_event.offsetX, a_event.offsetY, this.__scalePxToServer);
     }
 
     if ( this.__edition ) {
@@ -2297,6 +2315,19 @@ export class CasperEpaperServerDocument extends PolymerElement {
     }
   }
 
+  async _attachEditorWidget (binding) {
+    const tag    = binding?.widget?.tag || 'casper-epaper-text-widget';
+    this._widget = this._widgetCache.get(tag);
+    if ( ! this._widget ) {
+      try {
+        await import(`./${tag}.js`); // TODO app hash for correct resolve
+        this._widget = document.createElement(tag); // NOT litish!!!!
+      } catch (error) {
+        this._widget = undefined; // TODO some sort of error widget
+      }
+    }
+    console.log(binding);
+  }
 }
 
 customElements.define('casper-epaper-server-document', CasperEpaperServerDocument);

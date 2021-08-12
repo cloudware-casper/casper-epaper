@@ -603,10 +603,6 @@ class CasperEpaper extends PolymerElement {
     `;
   }
 
-  static get is () {
-    return 'casper-epaper';
-  }
-
   static get EPAPER_TYPES () {
     return {
       PDF: 'PDF',
@@ -1421,4 +1417,4 @@ class CasperEpaper extends PolymerElement {
   }
 }
 
-window.customElements.define(CasperEpaper.is, CasperEpaper);
+window.customElements.define('casper-epaper', CasperEpaper);

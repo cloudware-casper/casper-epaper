@@ -15,10 +15,27 @@
   -
   - You should have received a copy of the GNU Affero General Public License
   - along with casper-epaper.  If not, see <http://www.gnu.org/licenses/>.
-  -
+  - 
  */
 
+
+
+/*
+  Formating as U type
+
+  var fnf = document.getElementById("formattedNumberField");
+fnf.addEventListener('keyup', function(evt){
+    var n = parseInt(this.value.replace(/\D/g,''),10);
+    fnf.value = n.toLocaleString();
+}, false);
+
+autocomplete="off" a sane default
+but also multi inputs
+
+*/
+
 import { LitElement, html, css } from 'lit';
+import { CasperEpaperServerDocument } from './casper-epaper-types/casper-epaper-server-document.js';
 
 class CasperEpaperInput extends LitElement {
 
@@ -106,7 +123,7 @@ class CasperEpaperInput extends LitElement {
   render () {
     return html`
       <!--div id="input"-->
-      <input id="textarea" tabindex="1">
+      <input id="textarea" tabindex="1" autocomplete="off">
       <!--/div-->
       <casper-icon id="dropdown_btn" on-tap="_toggleOverlay" icon="casper-icons:arrow-drop-down" rotate\$="[[overlayVisible]]"></casper-icon>
       <casper-icon id="clear_btn" on-tap="_clearField" icon="casper-icons:clear-combo"></casper-icon>
@@ -937,7 +954,7 @@ class CasperEpaperInput extends LitElement {
   serverTooltipUpdate (left, top, width, height, content) {
     var mid_x, mid_y, bbi, bbc;
 
-    bbc = this.epaper.$.canvas.getBoundingClientRect();
+    bbc = this.epaper.__canvas.getBoundingClientRect();
     if ( this._textArea === undefined ) {
       return; // TODO
     }

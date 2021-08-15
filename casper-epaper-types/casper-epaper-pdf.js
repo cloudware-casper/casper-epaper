@@ -58,50 +58,82 @@ class CasperEpaperPdf extends PolymerElement {
     return html`
       <style>
         :host,
-        iframe {
+        #main {
+          position: relative;
+          z-index: 0;
+          height: 100%;
+        }
+        #main, #main iframe {
           width: 100%;
           height: 100%;
           border: none;
           display: block;
         }
+
+        #main iframe {
+          position: absolute;
+          left: 0;
+          top: 0;
+          /* border: 2px yellow solid; */
+        }
+
+
+        #main iframe.active {
+          display: inline-block;
+          z-index: 2;
+          opacity: 1;
+          transition: opacity 600ms ease;
+
+          /* height: 30%; */
+          /* border: 6px green solid; */
+        }
+
+        #main iframe.loader {
+          z-index: 1;
+          opacity: 0;
+          transition: opacity 600ms ease;
+
+          /* height: 30%; */
+          /* top: 400px; */
+          /* border: 6px red solid; */
+        }
+
       </style>
-      <iframe></iframe>
+      <div id='main'>
+        <iframe class='active'></iframe>
+        <iframe class='loader'></iframe>
+      </div>
+      </div>
     `;
   }
 
   ready () {
     super.ready();
+  }
 
-    this.__iframeElement = this.shadowRoot.querySelector('iframe');
-    this.__iframeElement.addEventListener('load', () => {
-      if (!this.source) return;
 
-      afterNextRender(this, () => {
-        this.loading = false;
-
-        // Check if the iframe has an embed element, which would mean that the PDF was correctly rendered.
-        if (!CasperBrowser.isFirefox) {
-          !this.__iframeElement.contentDocument.querySelector('embed')
-            ? this.__rejectCallback()
-            : this.__resolveCallback();
-        } else {
-          this.__resolveCallback();
-        }
-      });
-    });
+  reset () {
+    this.shadowRoot.querySelector('#main > .active').removeAttribute("src");
+    this.shadowRoot.querySelector('#main > .loader').removeAttribute("src");
+    this.source = undefined
+    this.__currentSource = undefined
+    console.log("PDF RESET")
   }
 
   /**
    * Opens a PDF document specified in the source property.
    */
   async open () {
+
     if (!this.source) return;
 
-    const newSource = this.source.includes('?')
-      ? `${this.source}&content-disposition=inline#view=Fit&toolbar=0`
-      : `${this.source}?content-disposition=inline#view=Fit&toolbar=0`;
+    this.__iframeElement       = this.shadowRoot.querySelector('#main > .active');
+    this.__iframeElementLoader = this.shadowRoot.querySelector('#main > .loader');
 
-    if (this.__currentSource === newSource) return;
+    let cacheTimestamp = Date.now();
+    const newSource = this.source.includes('?')
+      ? `${this.source}&timestamp=${cacheTimestamp}&content-disposition=inline#view=Fit&toolbar=0`
+      : `${this.source}?timestamp=${cacheTimestamp}&content-disposition=inline#view=Fit&toolbar=0`;
 
     return new Promise(async (resolve, reject) => {
       this.__rejectCallback = reject;
@@ -116,24 +148,91 @@ class CasperEpaperPdf extends PolymerElement {
           });
 
           if (!response.ok) return this.__rejectCallback();
+
         }
 
-        this.__iframeElement.src = newSource;
+
+        // console.log('after src => ', this.source)
+        this.__iframeElementLoader.src = newSource
         this.__currentSource = newSource;
 
-        this.loading = true;
+
+        if (this.checkTimer) clearInterval(this.checkTimer);
+
+        let counter = 0;
+        this.checkTimer = setInterval(async () => {
+          counter += 1;
+          let iframeLoader = this.shadowRoot.querySelector('#main > .loader');
+
+          let iframeDoc = iframeLoader?.contentDocument || iframeLoader?.contentWindow?.document ||  iframeLoader?.contentDocument?.getElementsByTagName('body')[0];
+          // console.log(`checking.... ${checkTimer}`, iframeLoader?.contentDocument?.getElementsByTagName('body')[0]);
+          if (counter > 7) {
+            this.loading = true;
+          }
+          if (counter > 2 && (iframeDoc.readyState == 'complete' || iframeDoc.readyState == 'interactive')) {
+              console.log(`checking.... ${counter}`, iframeDoc.readyState);
+              clearInterval(this.checkTimer);
+              this.displayIframeAfterLoaded();
+              return;
+          }
+        }, 100);
+
+
+        if (CasperBrowser.isFirefox) {
+         this.displayIframeAfterLoaded();
+        }
+
       } catch (exception) {
         this.__rejectCallback();
-      }
+    }
     });
+  }
+
+
+  displayIframeAfterLoaded() {
+
+    let active = this.shadowRoot.querySelector('#main > .active');
+    let loader = this.shadowRoot.querySelector('#main > .loader');
+
+    // console.log("ACTIVE", active)
+    // console.log("LOADER", loader)
+
+    loader.classList.remove('loader')
+    loader.classList.add('active')
+
+    active.classList.remove('active')
+    active.classList.add('loader')
+
+    // setTimeout( async () => {
+    //   this.__currentSource = undefined
+    //   this.shadowRoot.querySelector('.loader').removeAttribute("src")
+    //   console.log("CLEAR SRC")
+    // },500);
+
+
+    this.loading = false;
+    this.__resolveCallback('pdf loaded');
   }
 
   /**
    * Prints the currently rendered PDF document.
    */
   print () {
-    this.__iframeElement.contentWindow.print();
+    if (CasperBrowser.isSafari) return this._openOnTab(this.shadowRoot.querySelector('#main > .active').src);
+    this.shadowRoot.querySelector('#main > .active').contentWindow.print();
   }
+
+  _openOnTab (publicLink) {
+    try {
+      let win = window.open(publicLink, 'printing_tab');
+      win.focus();
+      this.close();
+    } catch (e) {
+      this.close();
+      console.error("PDF blocked");
+    }
+  }
+
 }
 
 customElements.define(CasperEpaperPdf.is, CasperEpaperPdf);

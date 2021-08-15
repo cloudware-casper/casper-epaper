@@ -189,7 +189,7 @@ class CasperEpaper extends PolymerElement {
         .epaper #epaper-container #epaper-component-container {
           display: none;
           position: relative;
-          background-color: white;
+          background-color: transparent;
         }
 
         .epaper #epaper-container #epaper-component-sticky {
@@ -212,6 +212,15 @@ class CasperEpaper extends PolymerElement {
         .epaper #epaper-container #epaper-component-sticky .text-small { font-size: 0.5em; }
         .epaper #epaper-container #epaper-component-sticky .text-bigger { font-size: 1.25em; }
         .epaper #epaper-container #epaper-component-sticky .text-biggest { font-size: 1.5em; }
+
+        .epaper #epaper-container .cta-button {
+          position: absolute;
+          right: -10px;
+          top: 6px;
+          z-index: 5;
+          margin: 0;
+          height: 40px;
+        }
 
         #epaper-component-loading-overlay {
           top: 0;
@@ -258,9 +267,9 @@ class CasperEpaper extends PolymerElement {
         }
 
         .document-checklist {
-          width: 300px;
+          width: 320px;
           position: absolute;
-          background: #ff2600;
+          background: var(--status-red);
           box-shadow: 0 2px 9px 0 rgba(0,0,0,0.50);
           border-radius: 4px;
           z-index: 2;
@@ -280,6 +289,10 @@ class CasperEpaper extends PolymerElement {
           top: 7px;
           transition: top 200ms linear;
         }
+
+
+
+
 
 
         .document-checklist:hover .expanded{
@@ -312,7 +325,8 @@ class CasperEpaper extends PolymerElement {
         }
 
         .document-checklist .collapsed > p > casper-icon {
-          color: #ffe100
+          color: white;
+          padding-right: 6px;
         }
 
         .document-checklist > p, .document-checklist > div {
@@ -441,6 +455,9 @@ class CasperEpaper extends PolymerElement {
         <div id="epaper-container">
           <!--Epaper title-->
           <h3 inner-h-t-m-l="[[__currentAttachmentName]]"></h3>
+
+          <!--Casper-cta-button-->
+          <p class='cta-button'><slot name='casper-cta-button'></slot></p>
 
           <!--Epaper checklist tasks-->
           <template is="dom-if" if="[[__currentAttachmentCheckList.tasks]]">
@@ -667,6 +684,12 @@ class CasperEpaper extends PolymerElement {
           paddingBottom: 10
         }
       },
+      __epaperComponentStickyPosition: {
+        type: Object,
+        value: {
+          align: 'left'
+        }
+      },
       /** zoom factor when zoom is 1 one pt in report is one px in the screen */
       zoom: {
         type: Number,
@@ -720,6 +743,7 @@ class CasperEpaper extends PolymerElement {
       const initialZoom = Number(((this.shadowRoot.host.clientWidth - 80) / this.__epaperComponentWidth).toFixed(2));
 
       this.zoom = initialZoom > 0 ? initialZoom : 1;
+
     });
 
     this.__socket.addEventListener('casper-signed-in', () => {
@@ -728,6 +752,7 @@ class CasperEpaper extends PolymerElement {
 
     this.__nextAttachment = this.$['next-attachment'];
     this.__previousAttachment = this.$['previous-attachment'];
+
 
     this.__epaperContainer = this.$['epaper-container'];
     this.__epaperComponentSticky = this.$['epaper-component-sticky'];
@@ -751,6 +776,7 @@ class CasperEpaper extends PolymerElement {
         this.__epaperComponentSticky.style.opacity = 0.2;
       }
     });
+
   }
 
   //***************************************************************************************//
@@ -885,7 +911,13 @@ class CasperEpaper extends PolymerElement {
       this.__epaperActiveComponent.download();
     } else {
       const downloadLink = document.createElement('a');
-      downloadLink.setAttribute('href', `/file/${this.__currentAttachment.id}`);
+
+      if (this.__currentAttachment.name) {
+        const stripedName = this.__currentAttachment.name.match(/.+\.\D{3}/)[0]
+        downloadLink.setAttribute('href', `/file/${this.__currentAttachment.id}?filename=${stripedName}`);
+      } else {
+        downloadLink.setAttribute('href', `/file/${this.__currentAttachment.id}`);
+      }
       downloadLink.setAttribute('download', true);
       downloadLink.setAttribute('target', '_blank');
       downloadLink.style.display = 'none';
@@ -1142,6 +1174,7 @@ class CasperEpaper extends PolymerElement {
    * Open server document
    */
   async __openServerDocument () {
+    this.$.pdf.reset();
     await this.$.serverDocument.open(this.__currentAttachment);
 
     this.__toggleBetweenEpaperTypes(CasperEpaper.EPAPER_TYPES.SERVER_DOCUMENT);
@@ -1152,6 +1185,7 @@ class CasperEpaper extends PolymerElement {
    * Open a new image.
    */
   async __openImage () {
+    this.$.pdf.reset();
     this.$.image.source = `/file/${this.__currentAttachment.id}`;
     await this.$.image.open();
 
@@ -1165,6 +1199,7 @@ class CasperEpaper extends PolymerElement {
    * @param {String} iframeSource The iframe's source URL.
    */
   async __openIframe () {
+    this.$.pdf.reset();
     if (this.__currentAttachment.type === 'html') {
       this.$.iframe.$.iframe.srcdoc = this.__currentAttachment.html;
     } else {
@@ -1176,14 +1211,28 @@ class CasperEpaper extends PolymerElement {
     this.__enableOrDisableControlButtons({ ...{ zoom: true, print: false, paging: false, download: true }, ...this.__controlButtonsOptions });
   }
 
+
+  checkKey(e) {
+    e = e || window.event;
+
+    if (e.keyCode == '37') {
+      if (this.__previousAttachment.style.display != 'none') this.__onPreviousAttachmentClick(e)
+    }
+    else if (e.keyCode == '39') {
+      if (this.__nextAttachment.style.display != 'none') this.__onNextAttachmentClick(e)
+    }
+
+}
+
   /**
    * Open a PDF file.
    */
   async __openPDF () {
     this.$.pdf.source = `/file/${this.__currentAttachment.id}`;
-    await this.$.pdf.open();
-
+    console.log("BEFORE pdf open", this.$.pdf.source);
     this.__toggleBetweenEpaperTypes(CasperEpaper.EPAPER_TYPES.PDF);
+    await this.$.pdf.open();
+    console.log("AFTER pdf open", this.$.pdf.source);
     this.__enableOrDisableControlButtons({ ...{ zoom: true, print: true, paging: false, download: true }, ...this.__controlButtonsOptions });
   }
 
@@ -1266,12 +1315,23 @@ class CasperEpaper extends PolymerElement {
     this.__epaperType = epaperType;
     this.__epaperActiveComponent = this.$[epaperType.toLowerCase().replace(/([-_][a-z])/ig, lowercase => lowercase.toUpperCase().replace('_', ''))];
 
-    this.$.pdf.style.display = epaperType === CasperEpaper.EPAPER_TYPES.PDF ? '' : 'none';
+    this.$.pdf.style.display = epaperType === CasperEpaper.EPAPER_TYPES.PDF ? 'flex' : 'none';
     this.$.image.style.display = epaperType === CasperEpaper.EPAPER_TYPES.IMAGE ? '' : 'none';
     this.$.upload.style.display = epaperType === CasperEpaper.EPAPER_TYPES.UPLOAD ? '' : 'none';
     this.$.iframe.style.display = epaperType === CasperEpaper.EPAPER_TYPES.IFRAME ? '' : 'none';
     this.$.genericPage.style.display = epaperType === CasperEpaper.EPAPER_TYPES.GENERIC_PAGE ? '' : 'none';
     this.$.serverDocument.style.display = epaperType === CasperEpaper.EPAPER_TYPES.SERVER_DOCUMENT ? '' : 'none';
+    // console.log("%c__toggleBetweenEpaperTypes", "padding:10px;background-color:black;color:pink;",epaperType, CasperEpaper.EPAPER_TYPES.PDF, this.__currentAttachment?.id, this.$.pdf.style.display);
+    // console.groupCollapsed(`VISIBLITY ${this.__currentAttachment?.id}`)
+    // console.log(" @ pdf => ", this.$.pdf.style.display);
+    // console.log(" @ image => ", this.$.image.style.display);
+    // console.log(" @ upload => ", this.$.upload.style.display);
+    // console.log(" @ iframe => ", this.$.iframe.style.display);
+    // console.log(" @ genericPage => ", this.$.genericPage.style.display);
+    // console.log(" @ serverDocument => ", this.$.serverDocument.style.display);
+//
+    // console.groupEnd();
+
   }
 
   __zoomChanged () {
@@ -1286,9 +1346,8 @@ class CasperEpaper extends PolymerElement {
 
   __updateStickyDimensions () {
     afterNextRender(this, () => {
-      this.__epaperComponentSticky.style.height = !this.disableStickyAnimation
-        ? `${parseInt(this.__epaperComponentStickyStyle.height * this.zoom)}px`
-        : `${parseInt((this.stickyMaximumHeight || this.__epaperComponentStickyStyle.fullHeight) * this.zoom)}px`
+      this.__epaperComponentSticky.style.height     = 'auto';
+      this.__epaperComponentSticky.style.minHeight  = `${parseInt(this.__epaperComponentStickyStyle.height * this.zoom)}px`
 
       if (this.disableStickyAnimation) {
         this.__epaperComponentSticky.style.opacity = 1;
@@ -1312,7 +1371,15 @@ class CasperEpaper extends PolymerElement {
 
       // Scale the post-it dimensions and position.
       this.__epaperComponentSticky.style.top = `${parseInt(50 - this.__epaperComponentStickyStyle.clipSize * this.zoom)}px`;
-      this.__epaperComponentSticky.style.right = `${parseInt(this.__epaperComponentStickyStyle.right * this.zoom)}px`;
+
+      if (this.__epaperComponentStickyPosition.align == 'left') {
+        this.__epaperComponentSticky.style.left = `${parseInt(this.__epaperComponentStickyStyle.right * this.zoom)}px`;
+      }
+
+      if (this.__epaperComponentStickyPosition.align == 'right') {
+        this.__epaperComponentSticky.style.right = `${parseInt(this.__epaperComponentStickyStyle.right * this.zoom)}px`;
+      }
+
       this.__epaperComponentSticky.style.width = `${parseInt(this.__epaperComponentStickyStyle.width * this.zoom)}px`;
       this.__epaperComponentSticky.style.fontSize = `${parseInt(this.__epaperComponentStickyStyle.fontSize * this.zoom)}px`;
       this.__epaperComponentSticky.style.paddingTop = `${parseInt(this.__epaperComponentStickyStyle.paddingTop * this.zoom)}px`;

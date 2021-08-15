@@ -31,6 +31,7 @@ class CasperEpaperGenericPage extends PolymerElement {
     return html`
       <style>
         #template-container {
+          background-color: white;
           width: 100%;
           height: 100%;
         }

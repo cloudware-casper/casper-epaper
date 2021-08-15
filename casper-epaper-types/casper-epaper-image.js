@@ -53,6 +53,7 @@ class CasperEpaperImage extends PolymerElement {
           display: flex;
           align-items: center;
           justify-content: center;
+          background-color: white;
         }
 
         iframe {

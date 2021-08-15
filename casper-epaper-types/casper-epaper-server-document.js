@@ -20,7 +20,8 @@
 
 import { LitElement, html, css } from 'lit';
 
-import '../casper-epaper-input.js';
+import './casper-epaper-text-widget.js';
+//import '../casper-epaper-input.js';
 import '../casper-epaper-servertip-helper.js';
 import '@cloudware-casper/casper-icons/casper-icon-button.js';
 
@@ -135,13 +136,13 @@ export class CasperEpaperServerDocument extends LitElement {
       <canvas id="canvas"></canvas>
     </div>
 
-    <casper-epaper-input id="input" epaper-document=${this.__epaperDocument}></casper-epaper-input>
+    <casper-epaper-text-widget id="input"></casper-epaper-text-widget>
     <casper-epaper-servertip-helper id="servertip" epaper-document=${this.__epaperDocument}></casper-epaper-servertip-helper>
     <slot name="casper-epaper-line-menu">
     </slot>
     <div id="default-context-menu" class="context-menu" style="display: none;">
-      <casper-icon-button icon="fa-light:plus"      class="line-menu-button"        tooltip="Adicionar linha" on-click="__addDocumentLine"></casper-icon-button>
-      <casper-icon-button icon="fa-light:trash-alt" class="line-menu-button delete" tooltip="Remover linha"   on-click="__removeDocumentLine"></casper-icon-button>
+      <casper-icon-button icon="fa-light:plus"      class="line-menu-button"        tooltip="Adicionar linha" @click="${this.__addDocumentLine}"></casper-icon-button>
+      <casper-icon-button icon="fa-light:trash-alt" class="line-menu-button delete" tooltip="Remover linha"   @click="${this.__removeDocumentLine}"></casper-icon-button>
     </div>
     `;
   }

@@ -128,7 +128,6 @@ class CasperEpaperInput extends LitElement {
       <casper-icon id="dropdown_btn" on-tap="_toggleOverlay" icon="casper-icons:arrow-drop-down" rotate\$="[[overlayVisible]]"></casper-icon>
       <casper-icon id="clear_btn" on-tap="_clearField" icon="casper-icons:clear-combo"></casper-icon>
       <casper-icon id="edit_btn" on-tap="_toggleSubEditor" icon="casper-icons:edit-doc"></casper-icon>
-      <!--casper-select id="select" disable-smart-filter="" search-combo="" items="[[test]]"></casper-select-->
     `;
   }
 
@@ -149,17 +148,8 @@ class CasperEpaperInput extends LitElement {
     super();
 
     this.overlayVisible = false;
-
-    this.test = [];
-
-    //this._input          = this.$.input;
     this._binding = undefined;
-    //this._textArea = this.$.textarea;//this.$.input.$.textarea;
-    //this.$.date.inputBox = this.$.textarea;//this.$.input.$.textarea;
     this._visible = true;
-    //this.setVisible(false);
-    //this._select = this.$.select;
-    // TODO this.$.combo.setPositionTarget(this);
 
     /*
        TODO do we really meed these listners here, or just realy on input

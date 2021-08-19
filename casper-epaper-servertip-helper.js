@@ -94,7 +94,9 @@ class CasperEpaperServertipHelper extends LitElement {
     } else {
       // ... if the mouse leaves the tip's reference BB hide the tooltip ...
       if ( x < this._left || x > this._left + this._width || y < this._top || y > this._top + this._height ) {
-        this.input.hideTooltip();
+        if ( this.input ) {
+          this.input.hideTooltip();
+        }
         this._left = undefined;
         this._resetTimer();
       }
@@ -113,7 +115,9 @@ class CasperEpaperServertipHelper extends LitElement {
       this._top    = response.bbox.y / this._scalePxToServer;
       this._width  = response.bbox.w / this._scalePxToServer;
       this._height = response.bbox.h / this._scalePxToServer;
-      this.input.showTooltip(response.hint, { left: this._left, top: this._top, width: this._width, height: this._height});
+      if ( this.input ) {
+        this.input.showTooltip(response.hint, { left: this._left, top: this._top, width: this._width, height: this._height});
+      }
     }
   }
 
@@ -152,13 +156,13 @@ class CasperEpaperServertipHelper extends LitElement {
     if ( Math.abs(this._center_x - this._last_x) <= this.threshold &&
          Math.abs(this._center_y - this._last_y) <= this.threshold ) {
       let socket;
-      if ( 2.0 === this.epaper.__socket._version ) {
-        socket = this.epaperDocument.app.socket2;
+      if ( 2.0 === this.epaper._socket._version ) { // TODO make this less hardcoded
+        socket = this.epaper.app.socket2;
       } else {
-        socket = this.epaperDocument.app.socket;
+        socket = this.epaper.app.socket;
       }
       let response = await socket.getHint(
-        this.epaperDocument.documentId,
+        this.epaper.documentId,
         this._scalePxToServer * this._center_x,
         this._scalePxToServer * this._center_y
       );

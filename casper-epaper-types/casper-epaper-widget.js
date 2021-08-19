@@ -22,13 +22,37 @@ import { LitElement } from 'lit';
 
 export class CasperEpaperWidget extends LitElement {
 
+  static get properties() {
+    return {
+      /**
+       * The icon's name.
+       *
+       * @type {String}
+       */
+      overlay: {
+        type: String,
+        reflect: true
+      }
+    };
+  }
+
   constructor () {
     super();
+    this.overlay  = 'closed'; 
     this._binding = undefined; // or a prop called binding
     this._tag     = undefined;
     this.addEventListener('keypress', e => this._onKeypress(e));
     this.addEventListener('keydown', e => this._onKeyDown(e));
     //this.addEventListener('tap', e => this._onTap(e));
+  }
+
+  attach (binding) {
+    //console.log("+++ attach ", this.tagName);
+    this._binding = binding;
+  }
+
+  detach () {
+    //console.log("--- detach ", this.tagName);
   }
 
   /**
@@ -39,7 +63,7 @@ export class CasperEpaperWidget extends LitElement {
   setVisible (visible) {
     if (this._visible !== visible) {
       if (visible) {
-        this.style.display = 'inline-block';
+        this.style.display = 'flex';
       } else {
         this.style.display = 'none';
       }
@@ -57,12 +81,17 @@ export class CasperEpaperWidget extends LitElement {
    * @param {number} h box height in px
    */
   alignPosition (x, y, w, h) {
+    // can we do this in a more litish way ?
     this.style.left = x + 'px';
     this.style.top = y + 'px';
     this.style.width = w + 'px';
     this.style.height = h + 'px';
-    this._x = x;
-    this._y = y;
+    /*this._x = x;
+    this._y = y;*/
+  }
+
+  _toogleOverlay (event) {
+    this.overlay = this.overlay === 'open' ? 'closed' : 'open';
   }
 
   hideOverlays (hideButtons) {
@@ -74,7 +103,7 @@ export class CasperEpaperWidget extends LitElement {
   }
 
   setCasperBinding (binding) {
-
+    // this will most likely die to (painfull death)
   }
 
   /*****************************************************************************************/
@@ -84,11 +113,7 @@ export class CasperEpaperWidget extends LitElement {
   /*****************************************************************************************/
 
   grabFocus () {
-    if (this._initialSelection === true) {
-      this._textArea.selectionStart = 0;
-      this._textArea.selectionEnd = this._textArea.value.length;
-    }
-    this._textArea.focus();
+    // to nothing if don't know what to do 
   }
 
   _onKeypress (event) {
@@ -102,7 +127,7 @@ export class CasperEpaperWidget extends LitElement {
    *
    * @return the virtual key name or null if there no mapping
    */
-   _keycodeToVkey (event) {
+  _keycodeToVkey (event) {
     switch (event.keyCode) {
       case 8: // backspace
         return 'backspace';
@@ -204,7 +229,7 @@ export class CasperEpaperWidget extends LitElement {
     // ... if the mid point of the tooltip hint is outside the editor bounding box discard it ...
     if (mid_x < bbi.left || mid_x > bbi.right || mid_y < bbi.top || mid_y > bbi.bottom) {
       return;
-    }
+    } 
     if (content.length) {
       console.log('Show tooltip:', content); // TODO port to casper-app
       //this.epaper.$.tooltip.show(content); // TODO port to casper-app
@@ -253,7 +278,7 @@ export class CasperEpaperWidget extends LitElement {
     //  this.epaper.$.tooltip.hide();
     //}
     // [AG] - don't know why the above code is disabled - but epaper v2 needs this
-    if ( 2.0 === this.epaperDocument.__socket._version ) {
+    if ( 2.0 === this.epaper._socket._version ) {
       window.app.tooltip.hide();
     }
   }

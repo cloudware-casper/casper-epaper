@@ -693,7 +693,7 @@ class CasperEpaper extends PolymerElement {
       /** zoom factor when zoom is 1 one pt in report is one px in the screen */
       zoom: {
         type: Number,
-        observer: '__zoomChanged'
+        observer: '_zoomChanged'
       },
       __totalPageCount: {
         type: Number,
@@ -1334,13 +1334,13 @@ class CasperEpaper extends PolymerElement {
 
   }
 
-  __zoomChanged () {
+  _zoomChanged () {
     this.__enableOrDisableZoomButtons();
     this.__recalculateEpaperDimensions();
     afterNextRender(this, () => this.__epaperComponentContainer.style.display = 'block');
 
-    if (this.__epaperActiveComponent && typeof this.__epaperActiveComponent.__zoomChanged === 'function') {
-      afterNextRender(this, () => this.__epaperActiveComponent.__zoomChanged());
+    if (this.__epaperActiveComponent && typeof this.__epaperActiveComponent._zoomChanged === 'function') {
+      afterNextRender(this, () => this.__epaperActiveComponent._zoomChanged());
     }
   }
 

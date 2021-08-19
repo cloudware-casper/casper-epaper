@@ -99,7 +99,7 @@ class CasperEpaperImage extends PolymerElement {
   /**
    * This method gets manually invoked when the epaper container is resized.
    */
-  __zoomChanged () {
+  _zoomChanged () {
     this.__recalculateImageDimensions();
   }
 

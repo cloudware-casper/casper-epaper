@@ -20,8 +20,6 @@
 
 import { LitElement, html, css } from 'lit';
 
-import './casper-epaper-text-widget.js';
-//import '../casper-epaper-input.js';
 import '../casper-epaper-servertip-helper.js';
 import '@cloudware-casper/casper-icons/casper-icon-button.js';
 
@@ -86,7 +84,7 @@ export class CasperEpaperServerDocument extends LitElement {
        */
       currentPage: {
         type: Number,
-        observer: '__currentPageChanged',
+        observer: '__currentPageChanged',  // TODO port this to polymer
         notify: true
       },
       /**
@@ -136,8 +134,7 @@ export class CasperEpaperServerDocument extends LitElement {
       <canvas id="canvas"></canvas>
     </div>
 
-    <casper-epaper-text-widget id="input"></casper-epaper-text-widget>
-    <casper-epaper-servertip-helper id="servertip" epaper-document=${this.__epaperDocument}></casper-epaper-servertip-helper>
+    <casper-epaper-servertip-helper id="servertip" epaper-document=${this._epaperDocument}></casper-epaper-servertip-helper>
     <slot name="casper-epaper-line-menu">
     </slot>
     <div id="default-context-menu" class="context-menu" style="display: none;">
@@ -150,39 +147,52 @@ export class CasperEpaperServerDocument extends LitElement {
   constructor () {
     super();
 
-    this.__epaperDocument   = this;
-    this.__scrollContainer  = document.getElementById(this.scroller);
-    this.__message          = '';
-    this.__r_idx            = 0.0;
-    this.__bands            = undefined;
-    this.documentId         = undefined;
-    this.__images           = {};
-    this.__focusedBandId    = undefined;
-    this.__redraw_timer_key = '_epaper_redraw_timer_key';
-    this.__socket           = app.socket;
-    this.__app              = app;
-    this.__updateAssetsUrlFromSession();
+    this._epaperDocument   = this;
+    this._scrollContainer  = document.getElementById(this.scroller);
+    this._message          = '';
+    this._r_idx            = 0.0;
+    this._bands            = undefined;
+    this.documentId        = undefined;
+    this._images           = {};
+    this._focusedBandId    = undefined; // TODO maybe not used anymore
+    this._redraw_timer_key = '_epaper_redraw_timer_key';
+    this._socket           = app.socket;
+    this._app             = app;
+    this._updateAssetsUrlFromSession();
 
     this._widgetCache = new Map();
 
+    console.warn('hardcoding ep as global var!!!');
+    window.ep = this; 
+
     // Canvas.
-    this.__gridMajor       = 0.0;
-    this.__gridMinor       = 0.0;
-    this.__backgroundColor = '#FFF';
-    this.__pageWidth       = 595.0;
-    this.__pageHeight      = 842.0;
+    this._gridMajor       = 0.0;
+    this._gridMinor       = 0.0;
+    this._backgroundColor = '#FFF';
+    this._pageWidth       = 595.0;
+    this._pageHeight      = 842.0;
   }
 
   connectedCallback () {
     super.connectedCallback();
     this._deactivateContextMenu();
+    this._app.addEventListener('casper-page-changed', (e) => this._resetCommandData(true));
+    this._app.addEventListener('casper-session-updated', (e) => {
+      this._updateAssetsUrlFromSession();
+      this._resetCommandData(true);
+    });
+  }
+
+  disconnectedCallback () {
+    super.disconnectedCallback();
+    // TODO remove listeners
   }
 
   firstUpdated () {
 
     // # TODO check if normal default slot pattens is possible
     const contextMenuSlotElements = this.epaper.__fetchAssignedElementsRecursively(this.shadowRoot.querySelector('slot[name="casper-epaper-line-menu"]'));
-    this.__contextMenuIndex = -1;
+    this._contextMenuIndex = -1;
     this.__contextMenu = contextMenuSlotElements && contextMenuSlotElements.length > 0
         ? contextMenuSlotElements.shift()
         : this.renderRoot.getElementById('default-context-menu');
@@ -190,56 +200,44 @@ export class CasperEpaperServerDocument extends LitElement {
     this._is_socket_open = false;
 
     // Grab pointers to DOM elements
-    this.__canvas         = this.renderRoot.getElementById('canvas');
-    this._input           = this.renderRoot.getElementById('input');
+    this._canvas          = this.renderRoot.getElementById('canvas');
     this._servertip       = this.renderRoot.getElementById('servertip');
     this._canvasContainer = this.renderRoot.getElementById('canvas-container');
 
     // Variables to save the object context
     this._saved_idx         = 0.0;
     this._saved_draw_string = '';
-    this.__inputBoxDrawString = undefined;
 
-    this.__canvasContext   = this.__canvas.getContext('2d', { alpha: false });
-    this.__canvasWidth     = this.__canvas.width;
-    this.__canvasHeight    = this.__canvas.height;
-    this.__initiaPointer   = this.__canvas.style.cursor;
-    this.__canvasContext.globalCompositeOperation = 'copy';
+    this._canvasContext   = this._canvas.getContext('2d', { alpha: false });
+    this._canvasWidth     = this._canvas.width;
+    this._canvasHeight    = this._canvas.height;
+    this._canvasContext.globalCompositeOperation = 'copy';
 
-      // ... connect widgets ...
-    this._input.epaper     = this;
-    this._input.epaperDocument = this;
+
     this._servertip.epaper = this;
-    this._servertip.input  = this._input;
-    this._servertip.epaperDocument = this; // Sooo much duplication bros
 
     this.__edition = false;
-    this.__canvas.contentEditable = false;
+    this._canvas.contentEditable = false;
 
     this._background_color  = '#FFFFFF';
     this._normal_background = '#FFFFFF';
 
-    this.__resetRenderState();
-    this.__resetCommandData();
-    this.__setupPixelRatio();
-    this.__setupScale();
-    this.__zoomChanged();
-    this.__clearPage();
+    this._resetRenderState();
+    this._resetCommandData();
+    this._setupPixelRatio();
+    this._setupScale();
+    this._zoomChanged();
+    this._clearPage();
 
     // TODO remove this
     if ( this.__masteM_doc_right_margin !== undefined ) {
       this.__rightMmargin = this.__masteM_doc_right_margin;
     }
 
-    this.__canvas.addEventListener('mousemove', event => this._moveHandler(event));
-    this.__canvas.addEventListener('mousedown', event => this._mouseDownHandler(event));
-    this.__canvas.addEventListener('mouseup'  , event => this._mouseUpHandler(event));
-    this.__app.addEventListener('casper-page-changed', (e) => this.__resetCommandData(true));
-    this.__app.addEventListener('casper-session-updated', (e) => {
-      this.__updateAssetsUrlFromSession();
-      this.__resetCommandData(true);
-    });
-    this.__socket.addEventListener('casper-disconnected', (e) => this.__resetCommandData(true));
+    this._canvas.addEventListener('mousemove', event => this._moveHandler(event));
+    this._canvas.addEventListener('mousedown', event => this._mouseDownHandler(event));
+    this._canvas.addEventListener('mouseup'  , event => this._mouseUpHandler(event));
+    this._socket.addEventListener('casper-disconnected', (e) => this._resetCommandData(true));
     document.fonts.onloadingdone = (fontFaceSetEvent) => this._repaintPage();  
   }
 
@@ -256,13 +254,15 @@ export class CasperEpaperServerDocument extends LitElement {
    */
   async open (documentModel) {
 
-    if ( documentModel.epaper2 ) { this.__socket = app.socket2 }
+    if ( documentModel.epaper2 ) { 
+      this._socket = app.socket2; // TODO make this less hardcoded
+    }
 
     this.currentPage = 1; // # TODO goto page on open /
     if ( documentModel.backgroundColor ) {
-      this.__setBackground(documentModel.backgroundColor);
+      this._setBackground(documentModel.backgroundColor);
     } else {
-      this.__setBackground('#FFF');
+      this._setBackground('#FFF');
     }
     this.__prepareOpenCommand(documentModel);
     return this.__openChapter();
@@ -319,10 +319,10 @@ export class CasperEpaperServerDocument extends LitElement {
   async reOpen () {
     if ( this.document !== undefined ) {
       const cloned_command = JSON.parse(JSON.stringify(this.document));
-      this.__clear();
+      this._clear();
       await this.open(cloned_command);
     } else {
-      this.__clear();
+      this._clear();
     }
     return true;
   }
@@ -340,7 +340,7 @@ export class CasperEpaperServerDocument extends LitElement {
         ? `document highlight parameter "${fieldName}";`
         : `document highlight field "${fieldName}",${rowIndex};`;
 
-      this.__sendCommand(command);
+      this.__sendCommand(command); // TODO port this
     };
 
     if ( this.__jrxml !== undefined ) {
@@ -381,7 +381,7 @@ export class CasperEpaperServerDocument extends LitElement {
 
   //***************************************************************************************//
   //                                                                                       //
-  //                      ~~~ Constructor and intialization ~~~                            //
+  //                           ~~~ Initialization helpers ~~~                              //
   //                                                                                       //
   //***************************************************************************************//
 
@@ -390,20 +390,20 @@ export class CasperEpaperServerDocument extends LitElement {
    *
    * After server and client align the render contexts the server uses diferential updates
    */
-  __resetRenderState () {
+  _resetRenderState () {
     this._fill_color  = '#FFFFFF';
     this._text_color  = '#000000';
     this.fontSpec     = ['', '', 10, 'px ', 'DejaVu Sans Condensed'];
     this._font_mask   = 0;
-    this.__canvasContext.strokeStyle = '#000000';
-    this.__canvasContext.lineWidth   = 1.0;
-    this.__canvasContext.font        = this.fontSpec.join('');
+    this._canvasContext.strokeStyle = '#000000';
+    this._canvasContext.lineWidth   = 1.0;
+    this._canvasContext.font        = this.fontSpec.join('');
   }
 
   /**
-   * Initialize the  centralize here all that is needeed to init/clear the relation with server
+   * Initialize the command data centralize here all that is needeed to init/clear the relation with server
    */
-  __resetCommandData (keepLastCommand) {
+  _resetCommandData (keepLastCommand) {
     if ( ! keepLastCommand ) {
       this.__chapter = undefined;
     }
@@ -429,21 +429,21 @@ export class CasperEpaperServerDocument extends LitElement {
       && this.document.chapters !== undefined;
   }
 
-  __zoomChanged () {
-    if (!this.__canvas) return;
+  _zoomChanged () {
+    if (!this._canvas) return;
 
-    this.__setSize(
-      Math.round((this.__pageWidth  || this.width) * this.zoom),
-      Math.round((this.__pageHeight || this.height) * this.zoom)
+    this._setSize(
+      Math.round((this._pageWidth   || this.width) * this.zoom),
+      Math.round((this._pageHeight || this.height) * this.zoom)
     );
 
     // This is used to avoid the blinking black background when resizing a canvas.
-    this.__clearPage();
+    this._clearPage();
 
     if (this.documentId !== undefined && this.documentScale !== this.__sx) {
       // [AG] - load command call already sets/sends scale, so if loading do NOT send set scale command
       if ( false === this.loading ) {
-        this.__socket.setScale(this.documentId, 1.0 * this.__sx.toFixed(2));
+        this._socket.setScale(this.documentId, 1.0 * this.__sx.toFixed(2));
       }
       this.documentScale = this.__sx;
     }
@@ -452,14 +452,14 @@ export class CasperEpaperServerDocument extends LitElement {
   /**
    * @brief Clear the local document model
    */
-  __clear (keepLastCommand) {
+  _clear (keepLastCommand) {
     this.__hideWidgets();
-    this.__bands = undefined;
-    this.__images = {};
-    this.__focusedBandId = undefined;
-    this.__resetCommandData(keepLastCommand);
+    this._bands = undefined;
+    this._images = {};
+    this._focusedBandId = undefined;
+    this._resetCommandData(keepLastCommand);
     this.documentScale = undefined;
-    this.__clearPage();
+    this._clearPage();
   }
 
   /**
@@ -491,9 +491,8 @@ export class CasperEpaperServerDocument extends LitElement {
   async __openChapter (pageNumber) {
     this.loading = true;
 
-    this.__inputBoxDrawString = undefined;
     this._servertip.enabled = false;
-    this._input.setVisible(false);
+    //this._widget.setVisible(false);
     this.__hideWidgets(true);
     this.__resetScroll();
     this.__nextPage  = pageNumber || 1;
@@ -505,20 +504,20 @@ export class CasperEpaperServerDocument extends LitElement {
 
     if (!(this.__jrxml === this.__chapter.jrxml && this.__locale === this.__chapter.locale)) {
 
-      response = await this.__socket.openDocument(this.__chapter);
+      response = await this._socket.openDocument(this.__chapter);
 
       if (response.errors !== undefined) {
-        this.__clear();
+        this._clear();
         throw new Error(response.errors);
       }
 
       this.documentId  = response.id;
-      this.__socket.registerDocumentHandler(this.documentId, (message) => this.documentHandler(message));
-      this.__pageWidth  = response.page.width;
-      this.__pageHeight = response.page.height;
+      this._socket.registerDocumentHandler(this.documentId, (message) => this.documentHandler(message));
+      this._pageWidth   = response.page.width;
+      this._pageHeight = response.page.height;
 
-      if (isNaN(this.__pageHeight) || this.__pageHeight < 0) {
-        this.__pageHeight = 4000;
+      if (isNaN(this._pageHeight) || this._pageHeight < 0) {
+        this._pageHeight = 4000;
         this._canvasContainer.style.overflow = 'auto';
       } else {
         this._canvasContainer.style.overflow = '';
@@ -529,12 +528,12 @@ export class CasperEpaperServerDocument extends LitElement {
       this.__locale       = this.__chapter.locale;
     }
 
-    this.landscape = this.__pageHeight < this.__pageWidth;
-    this.__zoomChanged();
+    this.landscape = this._pageHeight < this._pageWidth ;
+    this._zoomChanged();
 
     this.__chapter.id = this.documentId;
 
-    response = await this.__socket.loadDocument({
+    response = await this._socket.loadDocument({
       id:       this.documentId,
       editable: this.__chapter.editable,
       path:     this.__chapter.path,
@@ -544,7 +543,7 @@ export class CasperEpaperServerDocument extends LitElement {
     });
 
     if ( response.errors !== undefined ) {
-      this.__clear();
+      this._clear();
       throw new Error(response.errors);
     }
 
@@ -553,7 +552,7 @@ export class CasperEpaperServerDocument extends LitElement {
     this.__edition = this.__chapter.editable;
     this.documentScale  = this.__sx;
 
-    this.__scalePxToServer = this.__pageWidth * this.__ratio / this.__canvas.width;
+    this.__scalePxToServer = this._pageWidth  * this.__ratio / this._canvas.width;
 
     this._repaintPage();
 
@@ -568,7 +567,7 @@ export class CasperEpaperServerDocument extends LitElement {
    */
   __hideWidgets (hideInputButtons) {
     this._deactivateContextMenu();
-    this._input.hideOverlays(hideInputButtons);
+    //this._widget.hideOverlays(hideInputButtons);
   }
 
   /**
@@ -590,7 +589,7 @@ export class CasperEpaperServerDocument extends LitElement {
           if ( i === this.__chapterIndex ) {
             if ( this.__chapterPageNumber !== newPageNumber ) {
               this.__resetScroll();
-              await this.__socket.gotoPage(this.documentId, newPageNumber);
+              await this._socket.gotoPage(this.documentId, newPageNumber);
               return pageNumber;
             }
           } else {
@@ -612,11 +611,11 @@ export class CasperEpaperServerDocument extends LitElement {
 
   async __removeDocumentLine () {
     // TODO spinner and errors
-    if (this.__contextMenuIndex !== - 1) {
-      const response = await this.__socket.deleteBand(
+    if (this._contextMenuIndex !== - 1) {
+      const response = await this._socket.deleteBand(
         this.documentId,
-        this.__bands[this.__contextMenuIndex]._type,
-        this.__bands[this.__contextMenuIndex]._id
+        this._bands[this._contextMenuIndex]._type,
+        this._bands[this._contextMenuIndex]._id
       );
     }
   }
@@ -624,11 +623,11 @@ export class CasperEpaperServerDocument extends LitElement {
   async __addDocumentLine () {
     // TODO spinner and errors
     try {
-      if (this.__contextMenuIndex !== - 1) {
-        const response = await this.__socket.addBand(
+      if (this._contextMenuIndex !== - 1) {
+        const response = await this._socket.addBand(
           this.documentId,
-          this.__bands[this.__contextMenuIndex]._type,
-          this.__bands[this.__contextMenuIndex]._id
+          this._bands[this._contextMenuIndex]._type,
+          this._bands[this._contextMenuIndex]._id
         );
       }  
     } catch (error) {
@@ -636,22 +635,22 @@ export class CasperEpaperServerDocument extends LitElement {
     }
   }
 
-  __binaryFindBandByY (a_y) {
-    if ( this.__bands !== undefined && this.__bands.length > 0 ) {
+  _binaryFindBandByY (a_y) {
+    if ( this._bands !== undefined && this._bands.length > 0 ) {
       let mid;
       let min = 0.0;
-      let max = this.__bands.length - 1;
+      let max = this._bands.length - 1;
 
       while ( min <= max ) {
         mid = Math.floor((min + max) / 2.0);
 
-        if (   this.__bands[mid]._type != 'Background'
-            && a_y >= this.__bands[mid]._ty
-            && a_y <= (this.__bands[mid]._ty + this.__bands[mid]._height) ) {
+        if (   this._bands[mid]._type != 'Background'
+            && a_y >= this._bands[mid]._ty
+            && a_y <= (this._bands[mid]._ty + this._bands[mid]._height) ) {
 
           return mid; // found!
 
-        } else if ( this.__bands[mid]._ty < a_y ) {
+        } else if ( this._bands[mid]._ty < a_y ) {
           min = mid + 1;
         } else {
           max = mid - 1;
@@ -662,14 +661,14 @@ export class CasperEpaperServerDocument extends LitElement {
   }
 
   async getLineId () {
-    if ( this.__contextMenuIndex !== -1 ) {
-      const band = this.__bands[this.__contextMenuIndex];
+    if ( this._contextMenuIndex !== -1 ) {
+      const band = this._bands[this._contextMenuIndex];
       if ( band._type === 'DT' && band._editable === true ) {
         this.epaper.__loading = true;
-        const response = await this.__socket.getBandDri(this.documentId, 'DT', band._id);
+        const response = await this._socket.getBandDri(this.documentId, 'DT', band._id);
         this.epaper.__loading = false;
         if ( response.errors !== undefined ) {
-          this.__clear();
+          this._clear();
           throw new Error(response.errors);
         }
         return response.band.data;
@@ -679,18 +678,18 @@ export class CasperEpaperServerDocument extends LitElement {
   }
 
   async getDataModelIndex () {
-    if ( this.__contextMenuIndex === -1 ) {
+    if ( this._contextMenuIndex === -1 ) {
       return -1;
     }
     let idx = 0;
 
-    for (let band of this.__bands) {
-      if ( band._type === 'DT' && this.__bands[idx]._editable === true ) {
-        if ( idx == this.__contextMenuIndex ) {
-          let response = await this.__socket.getBandDri(this.documentId,'DT',this.__bands[idx]._id);
+    for (let band of this._bands) {
+      if ( band._type === 'DT' && this._bands[idx]._editable === true ) {
+        if ( idx == this._contextMenuIndex ) {
+          let response = await this._socket.getBandDri(this.documentId,'DT',this._bands[idx]._id);
 
           if (response.errors !== undefined) {
-            this.__clear();
+            this._clear();
             throw new Error(response.errors);
           }
           return response.band.properties.dri-1;
@@ -700,44 +699,44 @@ export class CasperEpaperServerDocument extends LitElement {
     }
   }
 
-  __updateContextMenu (a_y) {
+  _updateContextMenu (a_y) {
     if ( this.__edition === false ) {
       this._deactivateContextMenu();
       return;
     } else {
-      let idx = this.__binaryFindBandByY(a_y);
+      let idx = this._binaryFindBandByY(a_y);
 
       if ( idx != -1 ) {
-        if ( this.__bands[idx]._type === 'DT' && this.__bands[idx]._editable == true ) {
-          if ( this.__contextMenuIndex === idx ) {
+        if ( this._bands[idx]._type === 'DT' && this._bands[idx]._editable == true ) {
+          if ( this._contextMenuIndex === idx ) {
             return;
           }
-          if ( this.__contextMenuIndex !== -1 ) {
-            this._deactivateContextMenu(this.__bands[this.__contextMenuIndex]);
-            this.__contextMenuIndex = -1;
+          if ( this._contextMenuIndex !== -1 ) {
+            this._deactivateContextMenu(this._bands[this._contextMenuIndex]);
+            this._contextMenuIndex = -1;
           }
-          this.__contextMenuIndex = idx;
-          this.__activateContextMenu(this.__bands[this.__contextMenuIndex]);
+          this._contextMenuIndex = idx;
+          this._activateContextMenu(this._bands[this._contextMenuIndex]);
 
         } else {
-          if ( this.__contextMenuIndex !== -1 ) {
-            this._deactivateContextMenu(this.__bands[this.__contextMenuIndex]);
-            this.__contextMenuIndex = -1;
+          if ( this._contextMenuIndex !== -1 ) {
+            this._deactivateContextMenu(this._bands[this._contextMenuIndex]);
+            this._contextMenuIndex = -1;
           }
         }
       } else {
-        if ( this.__contextMenuIndex !== -1 ) {
-          if ( this.__bands !== undefined ) {
-            this._deactivateContextMenu(this.__bands[this.__contextMenuIndex]);
+        if ( this._contextMenuIndex !== -1 ) {
+          if ( this._bands !== undefined ) {
+            this._deactivateContextMenu(this._bands[this._contextMenuIndex]);
           }
-          this.__contextMenuIndex = -1;
+          this._contextMenuIndex = -1;
         }
       }
     }
   }
 
-  __activateContextMenu (a_band) {
-    const x = (this.__pageWidth - this.__rightMmargin) * this.__sx;
+  _activateContextMenu (a_band) {
+    const x = (this._pageWidth  - this.__rightMmargin) * this.__sx;
     const y = a_band._ty + a_band._height / 2 - (CasperEpaperServerDocument.BTN_SIZE * this.__ratio) / 2;
 
     this.__contextMenu.style.left = (x / this.__ratio) + 'px';
@@ -802,7 +801,7 @@ export class CasperEpaperServerDocument extends LitElement {
   /**
    * @brief Determine the device pixel ratio: 1 on classical displays 2 on retina/UHD displays.
    */
-  __setupPixelRatio () {
+  _setupPixelRatio () {
     let devicePixelRatio  = window.devicePixelRatio || 1;
     if (devicePixelRatio > 1.6) {
       devicePixelRatio = 2;
@@ -811,11 +810,11 @@ export class CasperEpaperServerDocument extends LitElement {
     }
 
     const backingStoreRatio =
-      this.__canvasContext.webkitBackingStorePixelRatio ||
-      this.__canvasContext.mozBackingStorePixelRatio ||
-      this.__canvasContext.msBackingStorePixelRatio ||
-      this.__canvasContext.oBackingStorePixelRatio ||
-      this.__canvasContext.backingStorePixelRatio || 1;
+      this._canvasContext.webkitBackingStorePixelRatio ||
+      this._canvasContext.mozBackingStorePixelRatio ||
+      this._canvasContext.msBackingStorePixelRatio ||
+      this._canvasContext.oBackingStorePixelRatio ||
+      this._canvasContext.backingStorePixelRatio || 1;
 
     this.__ratio = devicePixelRatio / backingStoreRatio;
   }
@@ -823,15 +822,15 @@ export class CasperEpaperServerDocument extends LitElement {
   /**
    * Adjust the canvas dimension taking into account the pixel ratio and also calculates the scale the server should use.
    */
-  __setupScale () {
-    this.__canvas.width         = this.__canvasWidth * this.__ratio;
-    this.__canvas.height        = this.__canvasHeight * this.__ratio;
-    this.__canvas.style.width   = `${this.__canvasWidth}px`;
-    this.__canvas.style.height  = `${this.__canvasHeight}px`;
+  _setupScale () {
+    this._canvas.width         = this._canvasWidth * this.__ratio;
+    this._canvas.height        = this._canvasHeight * this.__ratio;
+    this._canvas.style.width   = `${this._canvasWidth}px`;
+    this._canvas.style.height  = `${this._canvasHeight}px`;
 
-    this.__sx = parseFloat((this.__canvas.width  / this.__pageWidth).toFixed(2));
+    this.__sx = parseFloat((this._canvas.width  / this._pageWidth ).toFixed(2));
 
-    this.__scalePxToServer = this.__pageWidth * this.__ratio / this.__canvas.width;
+    this.__scalePxToServer = this._pageWidth  * this.__ratio / this._canvas.width;
   }
 
   /**
@@ -841,17 +840,17 @@ export class CasperEpaperServerDocument extends LitElement {
    * @param {number} height Canvas height in px.
    * @param {boolean} forced When true forces a size change.
    */
-  __setSize (width, height, forced) {
-    if (width !== this.__canvasWidth || height !== this.__canvasHeight || forced) {
+  _setSize (width, height, forced) {
+    if (width !== this._canvasWidth || height !== this._canvasHeight || forced) {
       if (forced) {
-        this.__canvasWidth = 100;
-        this.__canvasHeight = 100;
-        this.__setupScale();
+        this._canvasWidth = 100;
+        this._canvasHeight = 100;
+        this._setupScale();
       }
 
-      this.__canvasWidth  = width;
-      this.__canvasHeight = height;
-      this.__setupScale();
+      this._canvasWidth  = width;
+      this._canvasHeight = height;
+      this._setupScale();
     }
   }
 
@@ -860,87 +859,87 @@ export class CasperEpaperServerDocument extends LitElement {
    *
    * @param {string} color in #RRGGBB format.
    */
-  __setBackground (color) {
-    this.__backgroundColor = color;
+  _setBackground (color) {
+    this._backgroundColor = color;
   }
 
   /**
    * Paints blank page
    */
-  __clearPage () {
-    const savedFill = this.__canvasContext.fillStyle;
+  _clearPage () {
+    const savedFill = this._canvasContext.fillStyle;
 
-    this.__canvasContext.fillStyle = this.__backgroundColor;
-    this.__canvasContext.fillRect(0, 0, this.__canvas.width, this.__canvas.height);
+    this._canvasContext.fillStyle = this._backgroundColor;
+    this._canvasContext.fillRect(0, 0, this._canvas.width, this._canvas.height);
 
-    if (this.__gridMajor !== 0.0) {
-      this.__paintGrid(this.__gridMajor, this.__gridMinor);
+    if (this._gridMajor !== 0.0) {
+      this.__paintGrid(this._gridMajor, this._gridMinor);
     }
-    this.__canvasContext.fillStyle = savedFill;
+    this._canvasContext.fillStyle = savedFill;
   }
 
   __resetCanvasDimensions () {
-    this.__canvas.width  = this.__canvasWidth  * this.__ratio;
-    this.__canvas.height = this.__canvasHeight * this.__ratio;
-    this.__clearPage();
+    this._canvas.width  = this._canvasWidth  * this.__ratio;
+    this._canvas.height = this._canvasHeight * this.__ratio;
+    this._clearPage();
   }
 
   __paintGrid (gridMajor, gridMinor) {
     let x      = 0;
     let y      = 0;
-    const width  = this.__canvas.width;
-    const height = this.__canvas.height;
+    const width  = this._canvas.width;
+    const height = this._canvas.height;
 
-    this.__canvasContext.beginPath();
-    this.__canvasContext.strokeStyle = '#C0C0C0';
-    this.__canvasContext.lineWidth   = 0.15;
+    this._canvasContext.beginPath();
+    this._canvasContext.strokeStyle = '#C0C0C0';
+    this._canvasContext.lineWidth   = 0.15;
 
     for (x = 0; x < width; x += gridMinor) {
       if ((x % gridMajor) !== 0) {
-        this.__canvasContext.moveTo(x, 0);
-        this.__canvasContext.lineTo(x, height);
+        this._canvasContext.moveTo(x, 0);
+        this._canvasContext.lineTo(x, height);
       }
     }
 
     for (y = 0; y < height; y += gridMinor) {
       if ((y % gridMajor) !== 0) {
-        this.__canvasContext.moveTo(0, y);
-        this.__canvasContext.lineTo(width, y);
+        this._canvasContext.moveTo(0, y);
+        this._canvasContext.lineTo(width, y);
       }
     }
 
-    this.__canvasContext.stroke();
-    this.__canvasContext.beginPath();
-    this.__canvasContext.strokeStyle = '#C0C0C0';
-    this.__canvasContext.lineWidth   = 0.5;
+    this._canvasContext.stroke();
+    this._canvasContext.beginPath();
+    this._canvasContext.strokeStyle = '#C0C0C0';
+    this._canvasContext.lineWidth   = 0.5;
 
     for (x = 0; x < width; x += gridMinor) {
       if ((x % gridMajor) === 0) {
-        this.__canvasContext.moveTo(x, 0);
-        this.__canvasContext.lineTo(x, height);
+        this._canvasContext.moveTo(x, 0);
+        this._canvasContext.lineTo(x, height);
       }
     }
 
     for (y = 0; y < height; y += gridMinor) {
       if ((y % gridMajor) === 0) {
-        this.__canvasContext.moveTo(0, y);
-        this.__canvasContext.lineTo(width, y);
+        this._canvasContext.moveTo(0, y);
+        this._canvasContext.lineTo(width, y);
       }
     }
 
-    this.__canvasContext.stroke();
-    this.__canvasContext.strokeStyle = '#000000';
+    this._canvasContext.stroke();
+    this._canvasContext.strokeStyle = '#000000';
   }
 
-  __paintString (a_draw_string) {
-    this.__message = a_draw_string;
-    this.__r_idx   = 0;
-    this.__paintBand();
+  _paintString (a_draw_string) {
+    this._message = a_draw_string;
+    this._r_idx   = 0;
+    this._paintBand();
   }
 
   __adjustScroll () {
-    if ( this.__scrollContainer ) {
-      let inputCr = this._input.getBoundingClientRect();
+    if ( this._scrollContainer ) {
+      let inputCr = this._widget.getBoundingClientRect();
       let leftEdge, rightEdge, topEdge, bottomEdge;
 
       /*if ( this.iframe ) {
@@ -961,8 +960,8 @@ export class CasperEpaperServerDocument extends LitElement {
       leftDelta   = Math.min(inputCr.left   - leftEdge    , 0);
       topDelta    = Math.min(inputCr.top    - topEdge     , 0);
       bottomDelta = Math.max(inputCr.bottom - bottomEdge  , 0);
-      this.__scrollContainer.scrollTop  += topDelta + bottomDelta;
-      this.__scrollContainer.scrollLeft += leftDelta + rightDelta;
+      this._scrollContainer.scrollTop  += topDelta + bottomDelta;
+      this._scrollContainer.scrollLeft += leftDelta + rightDelta;
     }
   }
 
@@ -1057,7 +1056,7 @@ export class CasperEpaperServerDocument extends LitElement {
       y   = img_info._t;
       s_y = 0;
     }
-    this.__canvasContext.drawImage(img, s_x, s_y, s_w, s_h, x, y, t_w, t_h);
+    this._canvasContext.drawImage(img, s_x, s_y, s_w, s_h, x, y, t_w, t_h);
   }
 
   /**
@@ -1078,21 +1077,21 @@ export class CasperEpaperServerDocument extends LitElement {
   __restartRedrawTimer (a_time_in_ms) {
     let timeout = a_time_in_ms !== undefined ? a_time_in_ms : 300;
 
-    if ( window[this.__redraw_timer_key] !== undefined ) {
-      window.clearTimeout(window[this.__redraw_timer_key]);
-      window[this.__redraw_timer_key] = undefined;
+    if ( window[this._redraw_timer_key] !== undefined ) {
+      window.clearTimeout(window[this._redraw_timer_key]);
+      window[this._redraw_timer_key] = undefined;
     }
-    window[this.__redraw_timer_key] = setInterval(this.__createRedrawTimerHandler(this), timeout);
+    window[this._redraw_timer_key] = setInterval(this.__createRedrawTimerHandler(this), timeout);
   }
 
-  __getString () {
-    let l = this.__getDouble();
-    let s  = this.__r_idx;
-    this.__r_idx += l + 1;
-    return this.__message.substring(s, s + l);
+  _getString () {
+    let l = this._getDouble();
+    let s  = this._r_idx;
+    this._r_idx += l + 1;
+    return this._message.substring(s, s + l);
   }
 
-  __getDouble () {
+  _getDouble () {
 
     let fractional    = 0.0;
     let whole         = 0.0;
@@ -1101,13 +1100,13 @@ export class CasperEpaperServerDocument extends LitElement {
     let divider       = 1.0;
     let current_c     = "";
 
-    if ( this.__message[this.__r_idx] === '-' ) {
+    if ( this._message[this._r_idx] === '-' ) {
       negative = true;
-      this.__r_idx++;
+      this._r_idx++;
     }
 
     while ( true ) {
-      current_c = this.__message[this.__r_idx++];
+      current_c = this._message[this._r_idx++];
       switch (current_c) {
         case '0':
         case '1':
@@ -1147,19 +1146,19 @@ export class CasperEpaperServerDocument extends LitElement {
 
   _binaryFindBandById (a_id) {
 
-    if ( this.__bands !== undefined && this.__bands.length > 0 ) {
+    if ( this._bands !== undefined && this._bands.length > 0 ) {
       let mid;
       let min = 0.0;
-      let max = this.__bands.length - 1;
+      let max = this._bands.length - 1;
 
       while ( min <= max ) {
         mid = Math.floor((min + max) / 2.0);
 
-        if ( this.__bands[mid]._id === a_id ) {
+        if ( this._bands[mid]._id === a_id ) {
 
           return mid; // found!
 
-        } else if ( this.__bands[mid]._id < a_id ) {
+        } else if ( this._bands[mid]._id < a_id ) {
           min = mid + 1;
         } else {
           max = mid - 1;
@@ -1175,7 +1174,7 @@ export class CasperEpaperServerDocument extends LitElement {
    * The paint instructions are in the _message string, this string is walked using _r_idx index handling each
    * command until the end of the message
    */
-  __paintBand () {
+   _paintBand () {
 
     let do_paint   = true;
     let option     = '';
@@ -1194,25 +1193,25 @@ export class CasperEpaperServerDocument extends LitElement {
     let s          = this.__ratio;
     let t1,t2,t3;
 
-    this.__resetRenderState();
-    while (this.__r_idx < this.__message.length) {
+    this._resetRenderState();
+    while (this._r_idx < this._message.length) {
 
-      switch ( this.__message[this.__r_idx++] ) {
+      switch ( this._message[this._r_idx++] ) {
 
         /*
          * === 'Z' [d] Zap clear the screen Z, Zd clear the band array but keeps screen content;
          */
         case 'Z':
 
-          if ( this.__message[this.__r_idx] === 'd' ) {
-            this.__resetRenderState();
-            this.__r_idx++;
+          if ( this._message[this._r_idx] === 'd' ) {
+            this._resetRenderState();
+            this._r_idx++;
           } else {
-            this.__clearPage();
+            this._clearPage();
           }
-          this.__r_idx++;
-          this.__bands = undefined;
-          this.__bands = [];
+          this._r_idx++;
+          this._bands = undefined;
+          this._bands = [];
           break;
 
         /*
@@ -1222,22 +1221,22 @@ export class CasperEpaperServerDocument extends LitElement {
         case 'B':
         case 'b':
 
-          option = this.__message[this.__r_idx - 1];
-          w      = this.__getDouble();
-          t1     = this.__message.substring(this.__r_idx, this.__r_idx + w); // Band type
-          this.__r_idx += w + 1;
-          w = this.__getDouble();                                          // Band ID
-          t2     = this.__message[this.__r_idx];                           // Editable - 't' or 'f'
-          this.__r_idx += 2;
-          h = this.__getDouble();                                          // Band height
-          x = this.__getDouble();
-          y = this.__getDouble();
+          option = this._message[this._r_idx - 1];
+          w      = this._getDouble();
+          t1     = this._message.substring(this._r_idx, this._r_idx + w); // Band type
+          this._r_idx += w + 1;
+          w      = this._getDouble();                                     // Band ID
+          t2     = this._message[this._r_idx];                           // Editable - 't' or 'f'
+          this._r_idx += 2;
+          h = this._getDouble();                                          // Band height
+          x = this._getDouble();
+          y = this._getDouble();
 
           // ... search for a band with same id on the stored band array ...
           let band = null;
           sx = this._binaryFindBandById(w);
           if ( sx !== -1 ) {
-            band = this.__bands[sx];
+            band = this._bands[sx];
           } else {
             band = null;
           }
@@ -1245,7 +1244,7 @@ export class CasperEpaperServerDocument extends LitElement {
           // ... if the id is not found then it's a new band  ...
           if ( band === null ) {
             band = new Object;
-            this.__bands.push(band);
+            this._bands.push(band);
           }
 
           // ... store the current paint context on the band object
@@ -1255,8 +1254,8 @@ export class CasperEpaperServerDocument extends LitElement {
           band._height      = h;
           band._tx          = x;
           band._ty          = y;
-          band._idx         = this.__r_idx;
-          band._draw_string = this.__message;
+          band._idx         = this._r_idx;
+          band._draw_string = this._message;
 
           if ( option === 'b' ) { // ... deferred painting leave the crayons in peace ...
 
@@ -1265,7 +1264,7 @@ export class CasperEpaperServerDocument extends LitElement {
           } else { // ... deferred painting leave the crayons in peace ...
 
             do_paint = true;
-            this.__canvasContext.clearRect(0, 0, this.__pageWidth, h);
+            this._canvasContext.clearRect(0, 0, this._pageWidth , h);
 
           }
           break;
@@ -1275,7 +1274,7 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'U':
 
-          if ( this.__bands !== undefined && this.__bands.length ) {
+          if ( this._bands !== undefined && this._bands.length ) {
             this._repaintPage();
           }
           return;
@@ -1287,36 +1286,36 @@ export class CasperEpaperServerDocument extends LitElement {
 
           if ( do_paint ) {
 
-            x  = this.__getDouble();
-            y  = this.__getDouble();
-            x2 = this.__getDouble();
-            y2 = this.__getDouble();
+            x  = this._getDouble();
+            y  = this._getDouble();
+            x2 = this._getDouble();
+            y2 = this._getDouble();
 
-            this.__canvasContext.beginPath();
+            this._canvasContext.beginPath();
 
             if ( x === x2 && this.__ratio == 1 ) {
 
-              w = Math.round(this.__canvasContext.lineWidth) & 0x1 ? -0.5 : 0;
-              this.__canvasContext.moveTo(x  + w, y  + w);
-              this.__canvasContext.lineTo(x2 + w, y2 + w);
+              w = Math.round(this._canvasContext.lineWidth) & 0x1 ? -0.5 : 0;
+              this._canvasContext.moveTo(x  + w, y  + w);
+              this._canvasContext.lineTo(x2 + w, y2 + w);
 
             } else if ( y === y2 && this.__ratio == 1 ) {
 
-              w = Math.round(this.__canvasContext.lineWidth) & 0x1 ? -0.5 : 0;
-              this.__canvasContext.moveTo(x  + w, y  + w)
-              this.__canvasContext.lineTo(x2 + w, y2 + w);
+              w = Math.round(this._canvasContext.lineWidth) & 0x1 ? -0.5 : 0;
+              this._canvasContext.moveTo(x  + w, y  + w)
+              this._canvasContext.lineTo(x2 + w, y2 + w);
 
             } else {
 
-              this.__canvasContext.moveTo(x , y);
-              this.__canvasContext.lineTo(x2, y2);
+              this._canvasContext.moveTo(x , y);
+              this._canvasContext.lineTo(x2, y2);
 
             }
 
-            this.__canvasContext.stroke();
+            this._canvasContext.stroke();
 
           } else {
-            this.__getDouble(); this.__getDouble(); this.__getDouble(); this.__getDouble();
+            this._getDouble(); this._getDouble(); this._getDouble(); this._getDouble();
           }
           break;
 
@@ -1325,47 +1324,47 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'R':
 
-          switch (this.__message[this.__r_idx] ) {
+          switch (this._message[this._r_idx] ) {
             case 'S':
-              this.__r_idx++;
+              this._r_idx++;
             // fall trough
             default:
               if ( do_paint ) {
-                this.__canvasContext.strokeRect(this.__getDouble(), this.__getDouble(), this.__getDouble(), this.__getDouble());
+                this._canvasContext.strokeRect(this._getDouble(), this._getDouble(), this._getDouble(), this._getDouble());
               } else {
-                this.__getDouble(); this.__getDouble(); this.__getDouble(); this.__getDouble()
+                this._getDouble(); this._getDouble(); this._getDouble(); this._getDouble()
               }
               break;
 
             case 'F':
-              this.__r_idx++;
-              this.__canvasContext.fillStyle = this._fill_color;
+              this._r_idx++;
+              this._canvasContext.fillStyle = this._fill_color;
               if ( do_paint ) {
-                this.__canvasContext.fillRect(this.__getDouble(), this.__getDouble(), this.__getDouble(), this.__getDouble());
+                this._canvasContext.fillRect(this._getDouble(), this._getDouble(), this._getDouble(), this._getDouble());
               } else {
-                this.__getDouble(); this.__getDouble(); this.__getDouble(); this.__getDouble();
+                this._getDouble(); this._getDouble(); this._getDouble(); this._getDouble();
               }
               break;
 
             case 'P':
-              this.__r_idx++;
-              this.__canvasContext.fillStyle = this._fill_color;
+              this._r_idx++;
+              this._canvasContext.fillStyle = this._fill_color;
               if ( do_paint ) {
-                this.__canvasContext.beginPath();
-                this.__canvasContext.rect(this.__getDouble(), this.__getDouble(), this.__getDouble(), this.__getDouble());
-                this.__canvasContext.fill();
-                this.__canvasContext.stroke();
+                this._canvasContext.beginPath();
+                this._canvasContext.rect(this._getDouble(), this._getDouble(), this._getDouble(), this._getDouble());
+                this._canvasContext.fill();
+                this._canvasContext.stroke();
               } else {
-                this.__getDouble(); this.__getDouble(); this.__getDouble(); this.__getDouble();
+                this._getDouble(); this._getDouble(); this._getDouble(); this._getDouble();
               }
               break;
 
             case 'C':
-              this.__r_idx++;
+              this._r_idx++;
               if ( do_paint ) {
-                this.__canvasContext.clearRect(this.__getDouble(), this.__getDouble(), this.__getDouble(), this.__getDouble());
+                this._canvasContext.clearRect(this._getDouble(), this._getDouble(), this._getDouble(), this._getDouble());
               } else {
-                this.__getDouble(); this.__getDouble(); this.__getDouble(); this.__getDouble();
+                this._getDouble(); this._getDouble(); this._getDouble(); this._getDouble();
               }
               break;
           }
@@ -1379,50 +1378,50 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'r':
 
-          option = this.__message[this.__r_idx];
+          option = this._message[this._r_idx];
           switch (option) {
             case 'S':
             case 'F':
             case 'P':
-              this.__r_idx++;
+              this._r_idx++;
               break;
             default:
               option = 'S';
               break;
           }
-          r = this.__getDouble();
-          x = this.__getDouble();
-          y = this.__getDouble();
-          w = this.__getDouble();
-          h = this.__getDouble();
+          r = this._getDouble();
+          x = this._getDouble();
+          y = this._getDouble();
+          w = this._getDouble();
+          h = this._getDouble();
           if ( do_paint ) {
-            this.__canvasContext.beginPath();
-            this.__canvasContext.moveTo( x + r, y );
-            this.__canvasContext.arcTo(  x + w , y     , x + w     , y + r     , r);
-            this.__canvasContext.arcTo(  x + w , y + h , x + w - r , y + h     , r);
-            this.__canvasContext.arcTo(  x     , y + h , x         , y + h - r , r);
-            this.__canvasContext.arcTo(  x     , y     , x + r     , y         , r);
-            this.__canvasContext.closePath();
+            this._canvasContext.beginPath();
+            this._canvasContext.moveTo( x + r, y );
+            this._canvasContext.arcTo(  x + w , y     , x + w     , y + r     , r);
+            this._canvasContext.arcTo(  x + w , y + h , x + w - r , y + h     , r);
+            this._canvasContext.arcTo(  x     , y + h , x         , y + h - r , r);
+            this._canvasContext.arcTo(  x     , y     , x + r     , y         , r);
+            this._canvasContext.closePath();
           }
           switch(option) {
             case 'S':
               if ( do_paint ) {
-                this.__canvasContext.stroke();
+                this._canvasContext.stroke();
               }
               break;
 
             case 'F':
-              this.__canvasContext.fillStyle = this._fill_color;
+              this._canvasContext.fillStyle = this._fill_color;
               if ( do_paint ) {
-                this.__canvasContext.fill();
+                this._canvasContext.fill();
               }
               break;
 
             case 'P':
-              this.__canvasContext.fillStyle = this._fill_color;
+              this._canvasContext.fillStyle = this._fill_color;
               if ( do_paint ) {
-                this.__canvasContext.fill();
-                this.__canvasContext.stroke();
+                this._canvasContext.fill();
+                this._canvasContext.stroke();
               }
               break;
           }
@@ -1438,184 +1437,184 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'e':
 
-          option = this.__message[this.__r_idx];
-          this.__r_idx++;
-          this.__canvasContext.save();
+          option = this._message[this._r_idx];
+          this._r_idx++;
+          this._canvasContext.save();
           if ( option === 'a' ) { // attach widget in epaper 2.0
             try {
-              const binding = JSON.parse(this.__message.substring(4, this.__message.length -1));
-              this._editor = this._attachEditorWidget(binding);
+              const binding = JSON.parse(this._message.substring(4, this._message.length -1));
+              this._r_idx += this._message.length - 4;
+              this._attachEditorWidget(binding);
             } catch (error) {
               console.error(`Invalid binding with ${error}`);
               // TODO how to show errors and recover
             }
-            this.__r_idx += this.__message.length - 4;
           } else if ( option === 'c') {  // Configure editor
 
             // ... clear the sub document variables ...
             this._sub_document_uri   = undefined;
             this._sub_document_jrxml = undefined;
 
-            let edit_mode = this.__message[this.__r_idx++];
+            let edit_mode = this._message[this._r_idx++];
             switch ( edit_mode ) {
 
             case 'r': // 'r' Text, but read only
-              if ( ',' === this.__message[this.__r_idx] ) {
-                this.__r_idx++;
-                w = this.__getDouble();
-                this._sub_document_uri = this.__message.substring(this.__r_idx, this.__r_idx + w);
-                this.__r_idx += w + 1; // +1 -> ','
+              if ( ',' === this._message[this._r_idx] ) {
+                this._r_idx++;
+                w = this._getDouble();
+                this._sub_document_uri = this._message.substring(this._r_idx, this._r_idx + w);
+                this._r_idx += w + 1; // +1 -> ','
                 console.log("Open URI: " + this._sub_document_uri)
-                w = this.__getDouble();
-                this._sub_document_jrxml = this.__message.substring(this.__r_idx, this.__r_idx + w);
-                this.__r_idx += w;
+                w = this._getDouble();
+                this._sub_document_jrxml = this._message.substring(this._r_idx, this._r_idx + w);
+                this._r_idx += w;
                 console.log("Open JRXML: " + this._sub_document_jrxml)
               }
-              this._input.setMode(edit_mode);
-              this.__r_idx += 1; // 't'
+              this._widget.setMode(edit_mode);
+              this._r_idx += 1; // 't'
               break;
 
             case 't':  // Text ( default )
 
-              this._input.setMode(edit_mode);
+              this._widget.setMode(edit_mode);
 
-              this.__r_idx += 1; // 't'
+              this._r_idx += 1; // 't'
               break;
 
             case 'd': // ... Date [,<length>,<pattern>] ...
 
-              if ( ',' === this.__message[this.__r_idx] ) {
-                this.__r_idx++;
-                w = this.__getDouble();
-                this._input.setMode(edit_mode);
-                this.__r_idx += w;
+              if ( ',' === this._message[this._r_idx] ) {
+                this._r_idx++;
+                w = this._getDouble();
+                this._widget.setMode(edit_mode);
+                this._r_idx += w;
               } else {
-                this._input.setMode(edit_mode);
+                this._widget.setMode(edit_mode);
               }
-              this.__r_idx++;
+              this._r_idx++;
               break;
 
             case 'n':  // ... Number [,<length>,<pattern>] ...
 
-              if ( ',' === this.__message[this.__r_idx] ) {
-                  this.__r_idx++;
-                  w = this.__getDouble();
-                  this._input.setMode(edit_mode);
-                  this.__r_idx += w;
+              if ( ',' === this._message[this._r_idx] ) {
+                  this._r_idx++;
+                  w = this._getDouble();
+                  this._widget.setMode(edit_mode);
+                  this._r_idx += w;
               } else {
-                this._input.setMode(edit_mode);
+                this._widget.setMode(edit_mode);
               }
-              this.__r_idx++;
+              this._r_idx++;
               break;
 
             case 'c':  // 'c'<version>,<empty_line><length>,<field_id>,<length>,<display_field>{,<length>,<field>}[,<length>,<list json>] Simple combo  client side
-              let version = this.__getDouble();
+              let version = this._getDouble();
               if ( version === 2 ) {
-                w  = this.__getDouble();
-                t2 = this.__message.substring(this.__r_idx, this.__r_idx + w);
-                this.__r_idx += w + 1;
+                w  = this._getDouble();
+                t2 = this._message.substring(this._r_idx, this._r_idx + w);
+                this._r_idx += w + 1;
                 try {
-                  this._input.setCasperBinding(JSON.parse(t2));
+                  this._widget.setCasperBinding(JSON.parse(t2));
                 } catch (err) {
                   console.log("*** JSON error in combo box config!!1");
                 }
               } else {
                 // empty_line: 0 or 1
-                let nullable_list = this.__getDouble();
+                let nullable_list = this._getDouble();
                 // fields '}'
                 let fields = [];
-                w = this.__getDouble();
+                w = this._getDouble();
                 if ( w > 2 ) {
-                  let tmp = this.__message.substring(this.__r_idx + 1, this.__r_idx + w - 1);
+                  let tmp = this._message.substring(this._r_idx + 1, this._r_idx + w - 1);
                   fields = tmp.split(',');
                   //console.log("Combo FIELDS: " + fields);
                 }
-                this.__r_idx += w + 1;
+                this._r_idx += w + 1;
 
                 // list id
-                w  = this.__getDouble();
-                t2 = this.__message.substring(this.__r_idx, this.__r_idx + w);
+                w  = this._getDouble();
+                t2 = this._message.substring(this._r_idx, this._r_idx + w);
                 //console.log("Combo list id: " + t2);
-                this.__r_idx += w + 1;
+                this._r_idx += w + 1;
 
                 // sub document params <length>,<uri>,<length>,<jrxml>
-                w = this.__getDouble();
+                w = this._getDouble();
                 if ( w == 0 ) {
                   this._sub_document_uri = undefined;
                 } else {
-                  this._sub_document_uri = this.__message.substring(this.__r_idx, this.__r_idx + w);
+                  this._sub_document_uri = this._message.substring(this._r_idx, this._r_idx + w);
                 }
-                this.__r_idx += w + 1;
-                w = this.__getDouble();
+                this._r_idx += w + 1;
+                w = this._getDouble();
                 if ( w == 0 ) {
                   this._sub_document_jrxml = undefined;
                 } else {
-                  this._sub_document_jrxml = this.__message.substring(this.__r_idx, this.__r_idx + w);
+                  this._sub_document_jrxml = this._message.substring(this._r_idx, this._r_idx + w);
                 }
-                this.__r_idx += w;
+                this._r_idx += w;
 
-                if ( ',' === this.__message[this.__r_idx] ) {
-                  this.__r_idx++;
+                if ( ',' === this._message[this._r_idx] ) {
+                  this._r_idx++;
                   // list [optional]
-                  w  = this.__getDouble();
-                  t3 = this.__message.substring(this.__r_idx, this.__r_idx + w);
+                  w  = this._getDouble();
+                  t3 = this._message.substring(this._r_idx, this._r_idx + w);
                   //console.log("Combo JSON: " + t3);
-                  this.__r_idx += w;
+                  this._r_idx += w;
                 } else {
                   t3 = undefined;
                 }
 
-                this._input.setMode(edit_mode);
-                this._input.setDisplayFields(fields);
-                this._input.setModelFromJson(t2,t3);
-                this.__r_idx++;
+                this._widget.setMode(edit_mode);
+                this._widget.setDisplayFields(fields);
+                this._widget.setModelFromJson(t2,t3);
+                this._r_idx++;
               }
               break;
 
             case 'R': // 'R'<idx>,<length>,<variable>,<lenght>,<value_array>
 
-              x  = this.__getDouble();                                      // -1 for parameters, row index for fields
-              w  = this.__getDouble();
-              t1 =this.__message.substring(this.__r_idx, this.__r_idx + w);   // variable name, parameter ou field
-              this.__r_idx += w + 1; // + 1 -> ','
-              w  = this.__getDouble();
-              t2 =this.__message.substring(this.__r_idx, this.__r_idx + w);   // Array with current and possible values
-              this.__r_idx += w + 1; // +1 -> ';''
-              this._input.setMode(edit_mode);
+              x  = this._getDouble();                                      // -1 for parameters, row index for fields
+              w  = this._getDouble();
+              t1 =this._message.substring(this._r_idx, this._r_idx + w);   // variable name, parameter ou field
+              this._r_idx += w + 1; // + 1 -> ','
+              w  = this._getDouble();
+              t2 =this._message.substring(this._r_idx, this._r_idx + w);   // Array with current and possible values
+              this._r_idx += w + 1; // +1 -> ';''
+              this._widget.setMode(edit_mode);
               break;
 
             case 'C': // 'C'[,<length>,<uri>,<length>,<jrxml>] Combos server side, IVAS, Rubricas, Centros de Custo
 
-              if ( ',' === this.__message[this.__r_idx] ) {
-                this.__r_idx++;
-                w = this.__getDouble();
-                this._sub_document_uri = this.__message.substring(this.__r_idx, this.__r_idx + w);
-                this.__r_idx += w;
-                this.__r_idx++; // ','
-                w = this.__getDouble();
-                this._sub_document_jrxml = this.__message.substring(this.__r_idx, this.__r_idx + w);
-                this.__r_idx += w;
+              if ( ',' === this._message[this._r_idx] ) {
+                this._r_idx++;
+                w = this._getDouble();
+                this._sub_document_uri = this._message.substring(this._r_idx, this._r_idx + w);
+                this._r_idx += w;
+                this._r_idx++; // ','
+                w = this._getDouble();
+                this._sub_document_jrxml = this._message.substring(this._r_idx, this._r_idx + w);
+                this._r_idx += w;
               }
-              this._input.setMode(edit_mode);
+              this._widget.setMode(edit_mode);
 
-              this.__r_idx += 1;
+              this._r_idx += 1;
               break;
 
             case 'l':  // 'l' Combo that searches on a ledger tree
 
-              this._input.setMode(edit_mode);
+              this._widget.setMode(edit_mode);
 
 
               let fields = [];
-              w = this.__getDouble();
+              w = this._getDouble();
               if ( w > 2 ) {
-                let tmp = this.__message.substring(this.__r_idx + 1, this.__r_idx + w - 1);
+                let tmp = this._message.substring(this._r_idx + 1, this._r_idx + w - 1);
                 fields = tmp.split(',');
 
                 //console.log("Combo FIELDS: " + fields);
               }
-              this._input.setDisplayFields(fields);
-              this.__r_idx += w + 1;
+              this._widget.setDisplayFields(fields);
+              this._r_idx += w + 1;
               break;
 
             default:
@@ -1624,135 +1623,134 @@ export class CasperEpaperServerDocument extends LitElement {
 
           } else if ( option === 'p' ) { // Prepare editor defines the bounding box
 
-            x = this.__getDouble() / s;
-            y = this.__getDouble() / s;
-            w = this.__getDouble() / s;
-            h = this.__getDouble() / s;
-            this.__inputBoxDrawString = this.__message.substring(this.__r_idx);
+            x = this._getDouble() / s;
+            y = this._getDouble() / s;
+            w = this._getDouble() / s;
+            h = this._getDouble() / s;
 
-            // TODO review with multipage
-            if ( 0 !== this.__canvas.getBoundingClientRect().left ) {
-              x += this.__canvas.getBoundingClientRect().left - this.parentElement.getBoundingClientRect().left;
-            }
-            if ( 0 !== this.__canvas.getBoundingClientRect().top ) {
-              y += this.__canvas.getBoundingClientRect().top - this.parentElement.getBoundingClientRect().top;
-            }
-
-            this._input.alignPosition(x, y, w, h);
-            this._input.setVisible(true);
-
-            this.__updateContextMenu(y + h / 2);
+            this._updateContextMenu(y + h / 2);
 
             return; // The rest of the draw string is just stored it will be painted by the editor
 
           } else if ( option === 's' ) { // ... start editor ...
 
-            x = this.__getDouble();
-            y = this.__getDouble();
-            h = this.__getDouble();
-            this.__focusedBandId = this.__getDouble();
+            x = this._getDouble();
+            y = this._getDouble();
+            h = this._getDouble();
+            this._focusedBandId = this._getDouble();
 
-            if ( '{' === this.__message[this.__r_idx] ) {
-              this.__r_idx += 1; // '{'
+            if ( '{' === this._message[this._r_idx] ) {
+              this._r_idx += 1; // '{'
 
-              w = this.__getDouble();
-              let id = this.__message.substring(this.__r_idx, this.__r_idx + w);
-              this.__r_idx += w + 1;
+              w = this._getDouble();
+              let id = this._message.substring(this._r_idx, this._r_idx + w);
+              this._r_idx += w + 1;
 
-              w = this.__getDouble();
-              let value = this.__message.substring(this.__r_idx, this.__r_idx + w);
-              this.__r_idx += w + 1; // +1 -> '}'
-              this._input.setValue(id, value);
+              w = this._getDouble();
+              let value = this._message.substring(this._r_idx, this._r_idx + w);
+              this._r_idx += w + 1; // +1 -> '}'
+              /*this._widget.setValue(id, value);*/
 
             } else {
-              w = this.__getDouble();
-              this._input.setValue(this.__message.substring(this.__r_idx, this.__r_idx + w));
-              this.__r_idx += w;
+              w = this._getDouble();
+              /*if ( this._widget ) {
+                this._widget.setValue(this._message.substring(this._r_idx, this._r_idx + w));
+              } else {
+                console.log('es');
+              }*/
+              this._r_idx += w;
             }
 
-            // Paint the input box and align the HTML control style
-            this._savePaintContext();
-            this.__paintString(this.__inputBoxDrawString);
-            this._restorePaintContext();
-            this._input.alignStyle(x,y,h);
-            this._input.grabFocus();
-            this.__r_idx += 1;
+            /*if ( this._widget ) {
+              this._widget.alignStyle(x,y,h);
+              this._widget.grabFocus();  
+            } else {
+              console.log('es');
+            }*/
+            this._r_idx += 1;
             this.__adjustScroll();
 
           } else if ( option === 'u' ) {  // ... update editor ...
 
-            w  = this.__getDouble();
-            t1 = this.__message.substring(this.__r_idx, this.__r_idx + w);
-            this.__r_idx += w;
-            if ( this.__message[this.__r_idx] !== ';' ) {
-              this.__r_idx += 1;
-              w  = this.__getDouble();
-              t2 = this.__message.substring(this.__r_idx, this.__r_idx + w);
-              this.__r_idx += w;
+            w  = this._getDouble();
+            t1 = this._message.substring(this._r_idx, this._r_idx + w);
+            this._r_idx += w;
+            if ( this._message[this._r_idx] !== ';' ) {
+              this._r_idx += 1;
+              w  = this._getDouble();
+              t2 = this._message.substring(this._r_idx, this._r_idx + w);
+              this._r_idx += w;
 
-              if ( this.__message[this.__r_idx] !== ';' ) {
-                this.__r_idx += 1;
-                w  = this.__getDouble();
-                t3 = this.__message.substring(this.__r_idx, this.__r_idx + w);
-                this.__r_idx += w + 1;
+              if ( this._message[this._r_idx] !== ';' ) {
+                this._r_idx += 1;
+                w  = this._getDouble();
+                t3 = this._message.substring(this._r_idx, this._r_idx + w);
+                this._r_idx += w + 1;
               } else {
-                this.__r_idx += 1;
+                this._r_idx += 1;
                 t3 = '';
               }
             } else {
-              this.__r_idx += 1;
+              this._r_idx += 1;
               t2 = '';
               t3 = '';
             }
             console.log("=== update: t1='" + t1 + "' t2='" + t2 + "' t3='" + t3 + "'");
 
-            if ( ';' !== this.__message[this.__r_idx - 1] ) {
-              w = this.__getDouble();
+            if ( ';' !== this._message[this._r_idx - 1] ) {
+              w = this._getDouble();
 
-              let json = this.__message.substring(this.__r_idx, this.__r_idx + w);
+              let json = this._message.substring(this._r_idx, this._r_idx + w);
 
-              //this._input.setModelFromJson(undefined, json);
-              //this._input.autoSizeOverlay(this._input.style.width);
+              //this._widget.setModelFromJson(undefined, json);
+              //this._widget.autoSizeOverlay(this._widget.style.width);
 
               //console.log("JSON: " + json);
 
-              this.__r_idx += w + 1;
+              this._r_idx += w + 1;
             } else {
-              //this._input.setModelFromJson(undefined, '[]');
-              //this._input.autoSizeOverlay(this._input.style.width);
+              //this._widget.setModelFromJson(undefined, '[]');
+              //this._widget.autoSizeOverlay(this._widget.style.width);
             }
 
           } else if ( option === 'f' ) { // ... finish or stop the editor ...
 
-            this._input.setCasperBinding(undefined);
-            this.__inputBoxDrawString = undefined;
-            this.__r_idx += 1;
+            /*if ( this._widget ) {
+              this._widget.setCasperBinding(undefined);
+            } else {
+              console.log('ef');
+            }*/
+            this._r_idx += 1;
 
             // ... clear the sub document variables ...
             this._sub_document_uri   = undefined;
             this._sub_document_jrxml = undefined;
           } else if ( option === 'b' ) {
 
-            this.__r_idx += 1;
+            this._r_idx += 1;
 
-            let tmp_stroke_style = this.__canvasContext.strokeStyle;
-            this.__canvasContext.strokeStyle = "#FF0000";
-            this.__canvasContext.strokeRect(this.__getDouble(), this.__getDouble(), this.__getDouble(), this.__getDouble());
-            this.__canvasContext.strokeStyle = tmp_stroke_style;
+            let tmp_stroke_style = this._canvasContext.strokeStyle;
+            this._canvasContext.strokeStyle = "#FF0000";
+            this._canvasContext.strokeRect(this._getDouble(), this._getDouble(), this._getDouble(), this._getDouble());
+            this._canvasContext.strokeStyle = tmp_stroke_style;
 
           } else if ( option === 'h' ) { // ... tootip hint ...
 
-            x  = this.__getDouble() / s;
-            y  = this.__getDouble() / s;
-            w  = this.__getDouble() / s;
-            h  = this.__getDouble() / s;
-            w  = this.__getDouble();
-            t1 = this.__message.substring(this.__r_idx, this.__r_idx + w);
-            this._input.serverTooltipUpdate(x, y, w, h, t1);
-            this.__r_idx += w + 1;
+            x  = this._getDouble() / s;
+            y  = this._getDouble() / s;
+            w  = this._getDouble() / s;
+            h  = this._getDouble() / s;
+            w  = this._getDouble();
+            t1 = this._message.substring(this._r_idx, this._r_idx + w);
+            if ( this._widget ) {
+              this._widget.serverTooltipUpdate(x, y, w, h, t1);
+            } else {
+              console.log('eh');
+            }
+            this._r_idx += w + 1;
           }
 
-          this.__canvasContext.restore();
+          this._canvasContext.restore();
           break;
 
         /*
@@ -1760,70 +1758,70 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'T':
 
-          option = this.__message[this.__r_idx];
+          option = this._message[this._r_idx];
           if ( option === 'S' || option === 'F' || option === 'P' ) {
-            this.__r_idx++;
+            this._r_idx++;
           } else {
             option = 'F';
           }
-          x = this.__getDouble();
-          y = this.__getDouble();
-          w = this.__getDouble();
-          this._t = this.__message.substring(this.__r_idx, this.__r_idx + w);
-          this.__r_idx += w;
-          if ( this.__message[this.__r_idx] == ',') {
-            this.__r_idx++;
-            option_num = this.__getDouble();
+          x = this._getDouble();
+          y = this._getDouble();
+          w = this._getDouble();
+          this._t = this._message.substring(this._r_idx, this._r_idx + w);
+          this._r_idx += w;
+          if ( this._message[this._r_idx] == ',') {
+            this._r_idx++;
+            option_num = this._getDouble();
 
             switch (option) {
               case 'F':
-                this.__canvasContext.fillStyle = this._text_color;
+                this._canvasContext.fillStyle = this._text_color;
                 if ( do_paint ) {
-                  this.__canvasContext.fillText(this._t, x, y, option_num);
+                  this._canvasContext.fillText(this._t, x, y, option_num);
                 }
                 break;
 
               case 'S':
                 if ( do_paint ) {
-                  this.__canvasContext.strokeText(this._t, x, y, option_num);
+                  this._canvasContext.strokeText(this._t, x, y, option_num);
                 }
                 break;
 
               case 'P':
-                this.__canvasContext.fillStyle = this._text_color;
+                this._canvasContext.fillStyle = this._text_color;
                 if ( do_paint ) {
-                  this.__canvasContext.fillText(this._t, x, y, option_num);
-                  this.__canvasContext.strokeText(this._t, x, y, option_num);
+                  this._canvasContext.fillText(this._t, x, y, option_num);
+                  this._canvasContext.strokeText(this._t, x, y, option_num);
                 }
                 break;
             }
 
           } else {
-            this.__r_idx++;
+            this._r_idx++;
             switch (option) {
               case 'F':
-                this.__canvasContext.fillStyle = this._text_color;
+                this._canvasContext.fillStyle = this._text_color;
                 if ( do_paint ) {
-                  this.__canvasContext.fillText(this._t, x, y);
+                  this._canvasContext.fillText(this._t, x, y);
                 }
                 break;
 
               case 'S':
                 if ( do_paint ) {
-                  this.__canvasContext.strokeText(this._t, x, y);
+                  this._canvasContext.strokeText(this._t, x, y);
                 }
                 break;
 
               case 'P':
-                this.__canvasContext.fillStyle = this._text_color;
+                this._canvasContext.fillStyle = this._text_color;
                 if ( do_paint ) {
-                  this.__canvasContext.fillText(this._t, x, y);
-                  this.__canvasContext.strokeText(this._t, x, y);
+                  this._canvasContext.fillText(this._t, x, y);
+                  this._canvasContext.strokeText(this._t, x, y);
                 }
                 break;
             }
           }
-          this.__canvasContext.fillStyle = this._fill_color;
+          this._canvasContext.fillStyle = this._fill_color;
           break;
 
         /*
@@ -1837,8 +1835,8 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'C':
 
-          this._fill_color = "#" + this.__message.substring(this.__r_idx, this.__r_idx + 6);
-          this.__r_idx += 7;
+          this._fill_color = "#" + this._message.substring(this._r_idx, this._r_idx + 6);
+          this._r_idx += 7;
           break;
 
         /*
@@ -1846,8 +1844,8 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'c':
 
-          this._text_color = "#" + this.__message.substring(this.__r_idx, this.__r_idx + 6);
-          this.__r_idx += 7;
+          this._text_color = "#" + this._message.substring(this._r_idx, this._r_idx + 6);
+          this._r_idx += 7;
           break;
 
         /*
@@ -1855,11 +1853,11 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'w':
 
-          w = this.__getDouble();
+          w = this._getDouble();
           if ( w <= 1 ) {
             w = this.__ratio;
           }
-          this.__canvasContext.lineWidth = w;
+          this._canvasContext.lineWidth = w;
           break;
 
         /*
@@ -1867,8 +1865,8 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 's':
 
-          this.__canvasContext.strokeStyle = "#" + this.__message.substring(this.__r_idx, this.__r_idx + 6);
-          this.__r_idx += 7;
+          this._canvasContext.strokeStyle = "#" + this._message.substring(this._r_idx, this._r_idx + 6);
+          this._r_idx += 7;
           break;
 
         /*
@@ -1882,16 +1880,16 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'E':
 
-          option = this.__message[this.__r_idx];
+          option = this._message[this._r_idx];
           if ( option == 'S' || option == 'F' || option == 'P' ) {
-            this.__r_idx++;
+            this._r_idx++;
           } else {
             option = 'F';
           }
-          x = this.__getDouble();
-          y = this.__getDouble();
-          w = this.__getDouble();
-          h = this.__getDouble();
+          x = this._getDouble();
+          y = this._getDouble();
+          w = this._getDouble();
+          h = this._getDouble();
           let ox = (w / 2) * CasperEpaperServerDocument.KAPPA,
               oy = (h / 2) * CasperEpaperServerDocument.KAPPA,
               xe = x + w,
@@ -1900,32 +1898,32 @@ export class CasperEpaperServerDocument extends LitElement {
               ym = y + h / 2;
 
           if ( do_paint ) {
-            this.__canvasContext.beginPath();
-            this.__canvasContext.moveTo(x, ym);
-            this.__canvasContext.bezierCurveTo(x       , ym - oy , xm - ox , y       , xm, y);
-            this.__canvasContext.bezierCurveTo(xm + ox , y       , xe      , ym - oy , xe, ym);
-            this.__canvasContext.bezierCurveTo(xe      , ym + oy , xm + ox , ye      , xm, ye);
-            this.__canvasContext.bezierCurveTo(xm - ox , ye      , x       , ym + oy , x , ym);
+            this._canvasContext.beginPath();
+            this._canvasContext.moveTo(x, ym);
+            this._canvasContext.bezierCurveTo(x       , ym - oy , xm - ox , y       , xm, y);
+            this._canvasContext.bezierCurveTo(xm + ox , y       , xe      , ym - oy , xe, ym);
+            this._canvasContext.bezierCurveTo(xe      , ym + oy , xm + ox , ye      , xm, ye);
+            this._canvasContext.bezierCurveTo(xm - ox , ye      , x       , ym + oy , x , ym);
           }
           switch (option) {
             case 'F':
-              this.__canvasContext.fillStyle = this._fill_color;
+              this._canvasContext.fillStyle = this._fill_color;
               if ( do_paint ) {
-                this.__canvasContext.fill();
+                this._canvasContext.fill();
               }
               break;
 
             case 'S':
               if ( do_paint ) {
-                this.__canvasContext.stroke();
+                this._canvasContext.stroke();
               }
               break;
 
             case 'P':
-              this.__canvasContext.fillStyle = this._fill_color;
+              this._canvasContext.fillStyle = this._fill_color;
               if ( do_paint ) {
-                this.__canvasContext.fill();
-                this.__canvasContext.stroke();
+                this._canvasContext.fill();
+                this._canvasContext.stroke();
               }
               break;
           }
@@ -1939,29 +1937,29 @@ export class CasperEpaperServerDocument extends LitElement {
         case 'I':
 
           let img_info = {
-            _id:   this.__getDouble(),
-            _path: this.__getString(),
-            _t:    this.__getDouble(),
-            _l:    this.__getDouble(),
-            _b:    this.__getDouble(),
-            _r:    this.__getDouble(),
-            _m:    this.__getString(),
-            _h:    this.__getString(),
-            _v:    this.__getString()
+            _id:   this._getDouble(),
+            _path: this._getString(),
+            _t:    this._getDouble(),
+            _l:    this._getDouble(),
+            _b:    this._getDouble(),
+            _r:    this._getDouble(),
+            _m:    this._getString(),
+            _h:    this._getString(),
+            _v:    this._getString()
           };
 
-          let img = this.__images[img_info._path];
+          let img = this._images[img_info._path];
           if ( img === undefined && img_info._path.length ) {
             img = new Image();
-            this.__images[img_info._path] = img;
+            this._images[img_info._path] = img;
             img.onload = function() {
               this.__restartRedrawTimer();
             }.bind(this);
             img.onerror = function() {
-              this.__images[img_info._path] = undefined;
+              this._images[img_info._path] = undefined;
             }.bind(this);
             img.src = this._uploaded_assets_url + img_info._path;
-            this.__images[img_info._path] = img;
+            this._images[img_info._path] = img;
           }
           if ( img && img.complete && typeof img.naturalWidth !== undefined && img.naturalWidth !== 0 ) {
             try {
@@ -1978,11 +1976,11 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'F':
 
-          w = this.__getDouble();
-          this._t = this.__message.substring(this.__r_idx, this.__r_idx + w);
-          this.__r_idx += w + 1;
+          w = this._getDouble();
+          this._t = this._message.substring(this._r_idx, this._r_idx + w);
+          this._r_idx += w + 1;
           this.fontSpec[CasperEpaperServerDocument.FONT_NAME_INDEX] = this._t;
-          this.__canvasContext.font = this.fontSpec.join('');
+          this._canvasContext.font = this.fontSpec.join('');
           break;
 
         /*
@@ -1990,24 +1988,24 @@ export class CasperEpaperServerDocument extends LitElement {
          *  |  'fm' Set font metrics <flag_mask>,f<size>,<fFlags>, <fTop>, <fAscent>, <fDescent>, <fBottom>, <fLeading>, <fAvgCharWidth>, <  fMaxCharWidth>, <fUnderlineThickness>, fUnderlinePosition>;
          */
         case 'f':
-          if ( 'm' == this.__message[this.__r_idx] ) {
-              this.__r_idx++;
-              this._input._f_flags               = this.__getDouble();
-              this._input._f_top                 = this.__getDouble();
-              this._input._f_ascent              = this.__getDouble();
-              this._input._f_descent             = this.__getDouble();
-              this._input._f_bottom              = this.__getDouble();
-              this._input._f_leading             = this.__getDouble();
-              this._input._f_avg_char_width      = this.__getDouble();
-              this._input._f_max_char_width      = this.__getDouble();
-              this._input._f_underline_thickness = this.__getDouble();
-              this._input._f_underline_position  = this.__getDouble();
+          if ( 'm' == this._message[this._r_idx] ) {
+              this._r_idx++;
+              /*this._widget._f_flags               = */this._getDouble();
+              /*this._widget._f_top                 = */this._getDouble();
+              /*this._widget._f_ascent              = */this._getDouble();
+              /*this._widget._f_descent             = */this._getDouble();
+              /*this._widget._f_bottom              = */this._getDouble();
+              /*this._widget._f_leading             = */this._getDouble();
+              /*this._widget._f_avg_char_width      = */this._getDouble();
+              /*this._widget._f_max_char_width      = */this._getDouble();
+              /*this._widget._f_underline_thickness = */this._getDouble();
+              /*this._widget._f_underline_position  = */this._getDouble();
           } else {
-              this._font_mask = this.__getDouble();
-              this.fontSpec[CasperEpaperServerDocument.SIZE_INDEX]   = Math.round(this.__getDouble());
+              this._font_mask = this._getDouble();
+              this.fontSpec[CasperEpaperServerDocument.SIZE_INDEX]   = Math.round(this._getDouble());
               this.fontSpec[CasperEpaperServerDocument.BOLD_INDEX]   = (this._font_mask & CasperEpaperServerDocument.BOLD_MASK)   ? 'bold '   : '';
               this.fontSpec[CasperEpaperServerDocument.ITALIC_INDEX] = (this._font_mask & CasperEpaperServerDocument.ITALIC_MASK) ? 'italic ' : '';
-              this.__canvasContext.font = this.fontSpec.join('');
+              this._canvasContext.font = this.fontSpec.join('');
           }
           break;
 
@@ -2016,8 +2014,8 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'X': //=== Legacy command, deprecated
 
-          this.__getDouble();
-          this.__getDouble();
+          this._getDouble();
+          this._getDouble();
           break;
 
         /*
@@ -2025,14 +2023,14 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 't':
 
-          switch (this.__message[this.__r_idx++]) {
+          switch (this._message[this._r_idx++]) {
             case 'r':
-              this.__canvasContext.translate(this.__getDouble(), this.__getDouble());
-              this.__canvasContext.rotate(this.__getDouble());
+              this._canvasContext.translate(this._getDouble(), this._getDouble());
+              this._canvasContext.rotate(this._getDouble());
               break;
             case 'c':
-              this.__canvasContext.setTransform(1, 0, 0, 1, 0, 0);
-              this.__r_idx++;
+              this._canvasContext.setTransform(1, 0, 0, 1, 0, 0);
+              this._r_idx++;
               break;
           }
           break;
@@ -2044,17 +2042,17 @@ export class CasperEpaperServerDocument extends LitElement {
          */
         case 'k': //===
 
-          option = this.__message[this.__r_idx++];
+          option = this._message[this._r_idx++];
           if ( 'g' === option ) {
-            this._grid_major = this.__getDouble();
-            this._grid_minor = this.__getDouble();
+            this._grid_major = this._getDouble();
+            this._grid_minor = this._getDouble();
           } else if ( 'p' === option ) {
-            let new_page_number = this.__getDouble();
-            let new_page_count = this.__getDouble();
+            let new_page_number = this._getDouble();
+            let new_page_count = this._getDouble();
 
             if ( this.__chapterPageNumber != new_page_number || this.__chapterPageCount != new_page_count ) {
               //if ( this.on_page_properties_changed != undefined ) {
-              //  this.on_page_properties_changed(this.__pageWidth, this.__pageHeight, new_page_number, new_page_count);
+              //  this.on_page_properties_changed(this._pageWidth , this._pageHeight, new_page_number, new_page_count);
               //}
               this.__chapterPageCount  = new_page_count;
               this.__chapterPageNumber = new_page_number;
@@ -2062,22 +2060,22 @@ export class CasperEpaperServerDocument extends LitElement {
           }
           break;
       }
-      if ( this.__message[this.__r_idx - 1] != ';' ) {
+      if ( this._message[this._r_idx - 1] != ';' ) {
         console.log("command is not terminated ...");
       }
     }
   }
 
   _onPaintMessage (a_message) {
-    this.__r_idx   = 2; // D:
-    this.__message = a_message;
-    this.__paintBand();
+    this._r_idx   = 2; // D:
+    this._message = a_message;
+    this._paintBand();
   }
 
   __resetScroll () {
-    if ( this.__scrollContainer ) {
-      this.__scrollContainer.scrollTop  = 0;
-      this.__scrollContainer.scrollLeft = 0;
+    if ( this._scrollContainer ) {
+      this._scrollContainer.scrollTop  = 0;
+      this._scrollContainer.scrollLeft = 0;
     }
   }
 
@@ -2094,33 +2092,28 @@ export class CasperEpaperServerDocument extends LitElement {
 
     this._reset_redraw_timer();
 
-    //console.time("repaint_page");
+    console.time("repaint_page");
 
     // ... save context clear the complete canvas ...
     this._savePaintContext();
-    this.__canvasContext.save();
-    this.__clearPage();
+    this._canvasContext.save();
+    this._clearPage();
 
     // ... repaint the bands top to down to respect the painter's algorithm ...
-    if ( this.__bands !== undefined ) {
-      for ( let i = 0; i < this.__bands.length; i++ ) {
+    if ( this._bands !== undefined ) {
+      for ( let i = 0; i < this._bands.length; i++ ) {
 
-        band = this.__bands[i];
-        this.__r_idx       = band._idx;
-        this.__message     = band._draw_string;
-        this.__paintBand();
+        band = this._bands[i];
+        this._r_idx       = band._idx;
+        this._message     = band._draw_string;
+        this._paintBand();
       }
     }
 
-    // ... now that whole page was redrawn the input box  ...
-    if ( this.__edition && this.__inputBoxDrawString !== undefined ) {
-      this.__paintString(this.__inputBoxDrawString);
-    }
-
-    this.__canvasContext.restore();
+    this._canvasContext.restore();
     this._restorePaintContext();
 
-    //console.timeEnd("repaint_page");
+    console.timeEnd("repaint_page");
   }
 
   /**
@@ -2128,20 +2121,20 @@ export class CasperEpaperServerDocument extends LitElement {
    */
   _reset_redraw_timer () {
 
-    if ( window[this.__redraw_timer_key] !== undefined ) {
-      window.clearTimeout(window[this.__redraw_timer_key]);
-      window[this.__redraw_timer_key] = undefined;
+    if ( window[this._redraw_timer_key] !== undefined ) {
+      window.clearTimeout(window[this._redraw_timer_key]);
+      window[this._redraw_timer_key] = undefined;
     }
   }
 
   _savePaintContext () {
-    this._saved_idx         = this.__r_idx;
-    this._saved_draw_string = this.__message;
+    this._saved_idx         = this._r_idx;
+    this._saved_draw_string = this._message;
   }
 
   _restorePaintContext () {
-    this.__r_idx           = this._saved_idx;
-    this.__message         = this._saved_draw_string;
+    this._r_idx           = this._saved_idx;
+    this._message         = this._saved_draw_string;
   }
 
   //***************************************************************************************//
@@ -2169,19 +2162,19 @@ export class CasperEpaperServerDocument extends LitElement {
         if ( notification.focus ) {
           if ( notification.focus === 'forward' ) {
             // [AG] - no longer required on v2
-            if ( 2.0 !== this.__socket._version ) {
+            if ( 2.0 !== this._socket._version ) {
               if ( this.epaper.nextChapter() === false ) {
                 // console todo add line ??
-                await this.__socket.setTextT(this.documentId, this._input._textArea.value, null, true);
+                await this._socket.setTextT(this.documentId, this._widget._textArea.value, null, true);
               }
             }
             return;
           }
           if ( notification.focus === 'backwards' ) {
             // [AG] - no longer required on v2
-            if ( 2.0 !== this.__socket._protocol.version ) {
+            if ( 2.0 !== this._socket._version ) {
               if ( false == this.epaper.previousChapter() ) {
-                await this.__socket.setTextT(this.documentId, this._input._textArea.value, null, true);
+                await this._socket.setTextT(this.documentId, this._widget._textArea.value, null, true);
               }
             }
             return;
@@ -2224,22 +2217,22 @@ export class CasperEpaperServerDocument extends LitElement {
 
       //case 'E':
 //
-      //  this.__r_idx   = 1;
-      //  this.__message = a_message;
+      //  this._r_idx   = 1;
+      //  this._message = a_message;
 //
-      //  let w = this.__getDouble();
-      //  let k = this.__message.substring(this.__r_idx, this.__r_idx + w);
-      //  this.__r_idx += w + 1; // +1 -> ','
+      //  let w = this._getDouble();
+      //  let k = this._message.substring(this._r_idx, this._r_idx + w);
+      //  this._r_idx += w + 1; // +1 -> ','
 //
-      //      w = this.__getDouble();
-      //  let t = this.__message.substring(this.__r_idx, this.__r_idx + w);
-      //  this.__r_idx += w + 1; // +1 -> ','
+      //      w = this._getDouble();
+      //  let t = this._message.substring(this._r_idx, this._r_idx + w);
+      //  this._r_idx += w + 1; // +1 -> ','
 //
-      //      w = this.__getDouble();
-      //  let m = this.__message.substring(this.__r_idx, this.__r_idx + w);
-      //  this.__r_idx += w + 1; // +1 -> ','
+      //      w = this._getDouble();
+      //  let m = this._message.substring(this._r_idx, this._r_idx + w);
+      //  this._r_idx += w + 1; // +1 -> ','
 //
-      //  if ( this.__message[this.__r_idx - 1] != ';' ) {
+      //  if ( this._message[this._r_idx - 1] != ';' ) {
       //    console.log("command is not terminated ...");
       //  }
 //
@@ -2292,15 +2285,15 @@ export class CasperEpaperServerDocument extends LitElement {
     // This means the canvas is being used by the PDF epaper so no need to react to these events.
     if (this.shadowRoot.host.style.display === 'none') return;
 
-    this.__socket.sendClick(
+    this._socket.sendClick(
       this.documentId,
       parseFloat((a_event.offsetX * this.__scalePxToServer).toFixed(2)),
       parseFloat((a_event.offsetY * this.__scalePxToServer).toFixed(2)),
-      this._input._textArea.value
+      this._widget?._textArea?.value
     );
 
-    if ( this.__edition ) {
-      this._input.grabFocus();
+    if ( this.__edition && this._widget ) {
+      this._widget.grabFocus();
     }
   }
 
@@ -2308,7 +2301,7 @@ export class CasperEpaperServerDocument extends LitElement {
    * @brief Creates the handler that listens to mouse movements
    */
   _moveHandler (a_event) {
-    if ( this._input.overlayVisible ) {
+    if ( this._widget && this._widget.overlayVisible ) { // TODO make sure this is still needed, or not
       return;
     }
 
@@ -2321,11 +2314,11 @@ export class CasperEpaperServerDocument extends LitElement {
     }
 
     if ( this.__edition ) {
-      this.__updateContextMenu(a_event.offsetY * this.__ratio);
+      this._updateContextMenu(a_event.offsetY * this.__ratio);
     }
   }
 
-  __updateAssetsUrlFromSession () {
+  _updateAssetsUrlFromSession () {
     try {
       this._uploaded_assets_url = app.session_data.app.config.public_assets_url;
     } catch (e) {
@@ -2333,19 +2326,58 @@ export class CasperEpaperServerDocument extends LitElement {
     }
   }
 
+  //***************************************************************************************//
+  //                                                                                       //
+  //                         ~~~ Epaper 2 widget management ~~~                            //
+  //                                                                                       //
+  //***************************************************************************************//
+
+  _adjustBinding (binding) {
+    const ratio = this.__ratio;
+    binding.ratio = ratio;
+    binding.x = binding.x / ratio; 
+    binding.y = binding.y / ratio; 
+    binding.w = binding.w / ratio;
+    binding.h = binding.h / ratio; 
+    
+    // TODO review with multipage
+    if ( 0 !== this._canvas.getBoundingClientRect().left ) {
+      binding.x += this._canvas.getBoundingClientRect().left - this.parentElement.getBoundingClientRect().left;
+    }
+    if ( 0 !== this._canvas.getBoundingClientRect().top ) {
+      binding.y += this._canvas.getBoundingClientRect().top - this.parentElement.getBoundingClientRect().top;
+    }
+  }
+
   async _attachEditorWidget (binding) {
-    const tag    = binding?.widget?.tag || 'casper-epaper-text-widget';
+    if ( this._widget ) {
+      this._widget.detach();
+      this._widget.setVisible(false);
+    }
+
+
+    const tag    = binding?.binding?.widget?.tag || 'casper-epaper-text-widget';
     this._widget = this._widgetCache.get(tag);
     if ( ! this._widget ) {
       try {
         await import(`./${tag}.js`); // TODO app hash for correct resolve
-        this._widget = document.createElement(tag); // NOT litish!!!!
+        this._widget = document.createElement(tag);
+        this.shadowRoot.appendChild(this._widget);
+        this._widgetCache.set(tag, this._widget);
+        this._widget.epaper = this;
       } catch (error) {
         this._widget = undefined; // TODO some sort of error widget
       }
     }
-    console.log(binding);
+    this._adjustBinding(binding);
+
+    // TODO only call attach
+    this._widget.attach(binding);
+    this._widget.setVisible(true);
+    this._widget.grabFocus();
+    this._widget.requestUpdate();
   }
 }
 
 customElements.define('casper-epaper-server-document', CasperEpaperServerDocument);
+

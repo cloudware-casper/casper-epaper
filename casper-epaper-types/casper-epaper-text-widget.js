@@ -28,24 +28,39 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
     super();
   }
 
+
+
   static styles = css`
     :host {
-      display: none;
+      display: flex;
       position: absolute;
-      background-color: orange;
-      border: 2px solid red;
-      box-sizing: border-box;
+      background-color: #D9E2F3;
+      border-bottom: 3px solid var(--dark-primary-color);
+      align-items: center;
+    }
+
+    .overlay-icon {
+      align-self: flex-center;
+      color: var(--dark-primary-color);
+      margin: 3px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 200ms linear;
+    }
+
+    .overlay-icon[overlay=open] {
+      transform: rotate(180deg);
     }
     
     input {
-      width: 100%;
       height: 100%;
+      width: 100%;
       padding: 0px;
       margin: 0px;
       border: none;
-      box-sizing: border-box;
-      outline: none;
-      background-color: rgba(0,0,0,0);
+      box-sizing: border-box !important;
+      outline: none !important;
+      background-color: transparent !important;
     }`;
 
   render () {
@@ -56,55 +71,18 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
     this._textArea = this.renderRoot.getElementById('textarea');
   }
 
-  /**
-   * Position and size the input overlay on top the editable element
-   *
-   * @param {number} x Upper left corner (x)
-   * @param {number} y Upper left corner (y)
-   * @param {number} w box width in px
-   * @param {number} h box height in px
-   */
-  alignPosition (x, y, w, h) {
-    super.alignPosition(x,y,w,h);
-    return;
-    /*_input*/this._textArea.style.left = '0px';
-    /*_input*/this._textArea.style.top = '0px';
-    /*_input*/this._textArea.style.width = w + 'px';
-    /*_input*/this._textArea.style.height = h + 'px';
-    /*_input*/this._textArea.scrollTop = 0;
-    /*_input*/this._textArea.scrollLeft = 0;
-  }
+  updated () {
+     // TODO can I do this tru style in a more litish way
+    this.alignPosition(this._binding.x, this._binding.y, this._binding.w, this._binding.h);
+    this._textArea.style.fontFamily = this._binding.font; 
+    this._textArea.style.fontSize   = this._binding.fs / this._binding.ratio + 'px'; 
+    this._textArea.style.color      = this._binding.fc;  
 
-  /**
-   * Align the HTML input text size baseline and left edge with the text drawn in the canvas, also sets color
-   *
-   * @param {number} a_text_left   Starting point of left aligned text # TODO paddding
-   * @param {number} a_baseline    Vertical baseline of the first text line # TODO remove??? or do PADDING?
-   */
-  alignStyle (a_text_left, a_baseline) {
+    console.warn('todo limit max size of overlay icon!!!');
 
-    // Make baseline and edge relative to input pox
-    var ratio = this.epaperDocument.__ratio;
-    var tl = a_text_left / ratio - this._x;
-    var bl = a_baseline / ratio - this._y;
-    var top = this._f_top / ratio;
-  
-    /*console.log(' ==> tl=' + tl + ' bl=' + bl + ' top=' + top);*/
-  
-    //this._textArea.style.padding     = '0px';
-    //this._textArea.style.margin      = '0px';
-    //this._textArea.style.marginLeft = Math.max(tl, 1) + 'px';
-    //this._textArea.style.marginRight = Math.max(tl, 1) + 'px';
-    //this._textArea.style.marginTop   = Math.max(bl + top, 1) + 'px';
-    this._textArea.style.fontFamily = this.epaperDocument.fontSpec[CasperEpaperServerDocument.FONT_NAME_INDEX];
-    this._textArea.style.fontSize = this.epaperDocument.fontSpec[CasperEpaperServerDocument.SIZE_INDEX] / ratio + 'px';
-    this._textArea.style.color = this.epaper._text_color;
-  }
-
-  setValue (value, displayValue) {
-    this._textArea.value = value;
+    this._textArea.value = this._binding.t;
     this._textArea.selectionStart = 0;
-    this._textArea.selectionEnd = value.length;
+    this._textArea.selectionEnd = this._binding.t.length;
     this._initialSelection = true;
   }
 
@@ -113,16 +91,16 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
 
     if (this._initialSelection === true || this._textArea.value.length === 0) {
       if (['down', 'up', 'left', 'right'].indexOf(vkey) > -1) {
-        this.epaperDocument.__socket.moveCursor(this.epaperDocument.documentId, vkey);
+        this.epaper._socket.moveCursor(this.epaper.documentId, vkey);
         event.preventDefault();
         return;
       } else if (['tab', 'shift+tab'].indexOf(vkey) > -1) {
         if (this._initialSelection === true) {
           this._initialSelection = false;
           if (vkey === 'shift+tab') {
-            this.epaperDocument.__socket.sendKey(this.epaperDocument.documentId, 'tab', 'shift');
+            this.epaper._socket.sendKey(this.epaper.documentId, 'tab', 'shift');
           } else {
-            this.epaperDocument.__socket.sendKey(this.epaperDocument.documentId, vkey);
+            this.epaper._socket.sendKey(this.epaper.documentId, vkey);
           }
           event.preventDefault();
           return;
@@ -141,12 +119,24 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
     }
 
     if (['enter', 'tab', 'shift+tab'].indexOf(vkey) > -1) {
-      this.epaperDocument.__socket.setText(this.epaperDocument.documentId,
+      this.epaper._socket.setText(this.epaper.documentId,
         this._textArea.value,
         vkey === 'shift+tab' ? 'left' : 'right');
       // this._setTextResponse.bind(this)); TODO WE HAVE A PROMISE NOW
       event.preventDefault();
       return;
+    }
+  }
+
+
+
+  grabFocus () {
+    if ( this._textArea ) {
+      if (this._initialSelection === true) {
+        this._textArea.selectionStart = 0;
+        this._textArea.selectionEnd = this._textArea.value.length;
+      }
+      this._textArea.focus();
     }
   }
 
@@ -173,7 +163,7 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
     if ( this._textArea === undefined ) {
       return; // TODO
     }
-    const bbc   = this.epaper.__canvas.getBoundingClientRect();
+    const bbc   = this.epaper._canvas.getBoundingClientRect();
     const bbi   = this._textArea.getBoundingClientRect();
     const mid_x = bbc.left + left + width / 2;
     const mid_y = bbc.top + top + height / 2;
@@ -183,7 +173,7 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
       return;
     }
     if (content.length) {
-      console.log('Show tooltip:', content); // TODO port to casper-app
+      //console.log('Show tooltip:', content); // TODO port to casper-app
       //this.epaper.$.tooltip.show(content); // TODO port to casper-app
     } else {
       this.hideTooltip();

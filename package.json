@@ -8,6 +8,7 @@
   "main": "casper-epaper.js",
   "dependencies": {
     "@cloudware-casper/casper-icons": "^3.x",
+    "@cloudware-casper/casper-select-lit": "^0.0.12",
     "@cloudware-casper/casper-upload-dropzone": "^1.x",
     "@polymer/iron-component-page": "^4.x",
     "@polymer/iron-dropdown": "^3.x",

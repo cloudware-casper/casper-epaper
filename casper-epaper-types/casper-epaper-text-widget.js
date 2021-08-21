@@ -49,7 +49,7 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
     }
 
     .overlay-icon[overlay=open] {
-      transform: rotate(180deg);
+      transform: rotate(-180deg);
     }
     
     input {
@@ -91,6 +91,9 @@ export class CasperEpaperTextWidget extends CasperEpaperWidget {
 
     if (this._initialSelection === true || this._textArea.value.length === 0) {
       if (['down', 'up', 'left', 'right'].indexOf(vkey) > -1) {
+        if ( this.overlay === 'open' && ['down', 'up'].includes(vkey) ) {
+          return;
+        }
         this.epaper._socket.moveCursor(this.epaper.documentId, vkey);
         event.preventDefault();
         return;

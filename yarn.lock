@@ -38,6 +38,18 @@
     "@cloudware-casper/casper-icons" "^2.x"
     "@polymer/polymer" "^3.x"
 
+"@cloudware-casper/casper-select-lit@^0.0.12":
+  version "0.0.12"
+  resolved "https://npm.pkg.github.com/download/@cloudware-casper/casper-select-lit/0.0.12/9ed7bbe7d2f20ab3804ad5c886285aad6ce9c80d45b4bb364d147bd3fd7c2521#ad7446918b15b27d9dc8aaee914dd568efc7d82a"
+  integrity sha512-dPVONr4l58ggNcRG+uZLcehsH87LmdnQ1Onxm5taCDhnyOmdz/W4zXQNRtites+GHpfIXg+XF3lopGK15yEtBA==
+  dependencies:
+    "@cloudware-casper/casper-icons" "^3.x"
+    "@cloudware-casper/casper-virtual-scroller" "^0.x"
+    "@polymer/paper-input" "^3.x"
+    "@popperjs/core" "^2.9.2"
+    lit "^2.0.0-rc.2"
+    popper-max-size-modifier "^0.2.0"
+
 "@cloudware-casper/casper-upload-dropzone@^1.x":
   version "1.8.0"
   resolved "https://npm.pkg.github.com/download/@cloudware-casper/casper-upload-dropzone/1.8.0/3795bf71d7fbfaca8540cca665c1cb323fd0cb75af0697ed2840e80e25b0e471#73445b9920a4e3d97d6638972dfdbf0cfe489d24"
@@ -48,6 +60,14 @@
     "@cloudware-casper/casper-notice" "^1.x"
     "@polymer/polymer" "^3.0.0"
     "@vaadin/vaadin-upload" "^4.x"
+
+"@cloudware-casper/casper-virtual-scroller@^0.x":
+  version "0.0.5"
+  resolved "https://npm.pkg.github.com/download/@cloudware-casper/casper-virtual-scroller/0.0.5/9bf875fde882fbff36e77c347724ebc1412d7632b8b8aa054af7cdf4cc317929#c3a60e0cd7041c7e6253fb8b7966452359722c96"
+  integrity sha512-Za64rapNAO8bo+Q4HrjFY18NpoH6/V1tj20dDSgdpqIt/1aBLC9Men4svWF8En/obsHf4mduZnk0Bui03/AofQ==
+  dependencies:
+    lit "^2.0.0-rc.2"
+    wc-spinners "^1.1.1"
 
 "@lit/reactive-element@^1.0.0-rc.2":
   version "1.0.0-rc.2"
@@ -406,6 +426,11 @@
     "@polymer/polymer" "^3.0.0"
     prismjs "^1.11.0"
 
+"@popperjs/core@^2.9.2":
+  version "2.9.3"
+  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.3.tgz#8b68da1ebd7fc603999cf6ebee34a4899a14b88e"
+  integrity sha512-xDu17cEfh7Kid/d95kB6tZsLOmSWKCZKtprnhVepjsSaCij+lM3mItSJDuuHDMbCWTh8Ejmebwb+KONcCJ0eXQ==
+
 "@types/trusted-types@^1.0.1":
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-1.0.6.tgz#569b8a08121d3203398290d602d84d73c8dcf5da"
@@ -567,7 +592,7 @@ good-listener@^1.2.2:
   dependencies:
     delegate "^3.1.2"
 
-"ink-ripple@github:alex-saunders/ink-ripple":
+ink-ripple@alex-saunders/ink-ripple:
   version "0.0.0"
   resolved "https://codeload.github.com/alex-saunders/ink-ripple/tar.gz/88e4d753bba9f7b57b372c62a4517bb091c7f713"
 
@@ -612,6 +637,11 @@ marked@~0.3.9:
   resolved "https://registry.yarnpkg.com/marked/-/marked-0.3.19.tgz#5d47f709c4c9fc3c216b6d46127280f40b39d790"
   integrity sha512-ea2eGWOqNxPcXv8dyERdSr/6FmzvWwzjMxpfGB/sbMccXoct+xY+YukPD+QTUZwyvK7BZwcr4m21WBOW41pAkg==
 
+popper-max-size-modifier@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/popper-max-size-modifier/-/popper-max-size-modifier-0.2.0.tgz#1574744401296a488b4974909d130a85db94256f"
+  integrity sha512-UerPt9pZfTFnpSpIBVJrR3ibHMuU1k5K01AyNLfMUWCr4z1MFH+dsayPlAF9ZeYExa02HPiQn5OIMqUSVtJEbg==
+
 prismjs@^1.11.0:
   version "1.23.0"
   resolved "https://registry.yarnpkg.com/prismjs/-/prismjs-1.23.0.tgz#d3b3967f7d72440690497652a9d40ff046067f33"
@@ -628,3 +658,8 @@ tiny-emitter@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/tiny-emitter/-/tiny-emitter-2.1.0.tgz#1d1a56edfc51c43e863cbb5382a72330e3555423"
   integrity sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q==
+
+wc-spinners@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/wc-spinners/-/wc-spinners-1.1.1.tgz#5a81b7eeb7865412f1a836d5a1abfe8d12390d29"
+  integrity sha512-N6XTH64mWzMrijhFhniSQKckI8n1opB9qSTzZYHwOF/qAMMIbsD9zSiG+eYTCX5Xb/qYgm6xnKOeDMM6+3rZJA==

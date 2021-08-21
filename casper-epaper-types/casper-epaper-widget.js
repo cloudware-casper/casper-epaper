@@ -52,6 +52,10 @@ export class CasperEpaperWidget extends LitElement {
   }
 
   detach () {
+    if ( this.overlay === 'open' ) {
+      this._overlay.hidePopover();
+      this.overlay = 'closed';
+    }
     //console.log("--- detach ", this.tagName);
   }
 
@@ -86,12 +90,18 @@ export class CasperEpaperWidget extends LitElement {
     this.style.top = y + 'px';
     this.style.width = w + 'px';
     this.style.height = h + 'px';
-    /*this._x = x;
-    this._y = y;*/
   }
 
   _toogleOverlay (event) {
-    this.overlay = this.overlay === 'open' ? 'closed' : 'open';
+    if ( this.overlay === 'open' ) {
+      this.overlay = 'closed';
+      this._overlay.hidePopover(event);
+    } else {
+      this.overlay = 'open';
+      this._textArea.value = undefined;
+      this._overlay.showPopover(event);
+    }
+    this._textArea.focus();
   }
 
   hideOverlays (hideButtons) {

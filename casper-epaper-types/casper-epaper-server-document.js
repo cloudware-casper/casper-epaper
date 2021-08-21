@@ -2366,6 +2366,7 @@ export class CasperEpaperServerDocument extends LitElement {
         this._widgetCache.set(tag, this._widget);
         this._widget.epaper = this;
       } catch (error) {
+        alert(error);
         this._widget = undefined; // TODO some sort of error widget
       }
     }

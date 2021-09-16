@@ -20,7 +20,7 @@
 
 import { css, html } from 'lit';
 import { CasperEpaperTextWidget } from './casper-epaper-text-widget.js';
-import '@cloudware-casper/casper-icons/casper-icon-class.js';
+import '@cloudware-casper/casper-icons/casper-icon.js';
 
 export class CasperEpaperDateWidget extends CasperEpaperTextWidget {
     

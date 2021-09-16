@@ -68,29 +68,26 @@ class CasperEpaper extends PolymerElement {
         }
 
         .toolbar {
+          display: grid;
+          grid-template-columns: minmax(min-content, 0.5fr) minmax(200px, 1fr) minmax(min-content, 0.5fr);
+          grid-column-gap: 20px;
           padding: 15px;
           z-index: 2;
-          display: flex;
           width: 100%;
-          overflow-x: auto;
           position: absolute;
           align-items: center;
           box-sizing: border-box;
-          justify-content: space-between;
+          overflow-x: auto;
         }
 
-        .toolbar > div {
+        .toolbar > div:first-of-type {
           display: flex;
+          justify-content: flex-start;
         }
 
-        .toolbar casper-icon-button,
-        ::slotted(casper-icon-button),
-        ::slotted(casper-tabs) {
-          margin-left: 8px;
-        }
-
-        ::slotted(casper-tabs) {
-          box-shadow: 0px 2px 12px -1px rgba(0, 0, 0, 0.6);
+        .toolbar > div:last-of-type {
+          display: flex;
+          justify-content: flex-end;
         }
 
         .toolbar casper-icon-button,
@@ -98,6 +95,7 @@ class CasperEpaper extends PolymerElement {
           width: 32px;
           height: 32px;
           padding: 7px;
+          margin-left: 8px;
           box-sizing: border-box;
           box-shadow: 0px 2px 12px -1px rgba(0, 0, 0, 0.6);
         }
@@ -290,11 +288,6 @@ class CasperEpaper extends PolymerElement {
           transition: top 200ms linear;
         }
 
-
-
-
-
-
         .document-checklist:hover .expanded{
           display: initial;
         }
@@ -417,6 +410,9 @@ class CasperEpaper extends PolymerElement {
           <casper-icon-button on-click="zoomIn"           id="zoomIn"       tooltip="Ampliar"         icon="fa-light:plus" reverse></casper-icon-button>
           <casper-icon-button on-click="goToPreviousPage" id="previousPage" tooltip="Página anterior" icon="fa-light:arrow-left"></casper-icon-button>
           <casper-icon-button on-click="goToNextPage"     id="nextPage"     tooltip="Página seguinte" icon="fa-light:arrow-right"></casper-icon-button>
+        </div>
+
+        <div>
           <!--Casper-epaper-tabs-->
           <slot name="casper-epaper-tabs"></slot>
         </div>

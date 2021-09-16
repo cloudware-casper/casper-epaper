@@ -1,21 +1,19 @@
 {
   "description": "Casper ePaper document renderer",
   "name": "@cloudware-casper/casper-epaper",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
   "main": "casper-epaper.js",
+  "author": "Cloudware S.A.",
+  "resolutions": {
+    "lit-element": "^3.0.0-rc.2"
+  },
   "dependencies": {
     "@cloudware-casper/casper-icons": "^3.x",
     "@cloudware-casper/casper-select-lit": "^0.0.12",
-    "@cloudware-casper/casper-upload-dropzone": "^1.x",
-    "@polymer/iron-component-page": "^4.x",
-    "@polymer/iron-dropdown": "^3.x",
-    "@polymer/iron-list": "^3.x",
-    "@polymer/paper-card": "^3.x",
-    "@polymer/paper-input": "^3.x",
-    "@polymer/paper-spinner": "^3.x",
+    "@cloudware-casper/casper-upload-dropzone": "^2.x",
     "@polymer/polymer": "^3.x",
     "@vaadin/vaadin-date-picker": "^4.x"
   }

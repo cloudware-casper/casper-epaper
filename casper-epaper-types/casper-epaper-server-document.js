@@ -255,7 +255,9 @@ export class CasperEpaperServerDocument extends LitElement {
   async open (documentModel) {
 
     if ( documentModel.epaper2 ) { 
-      this._socket = app.socket2; // TODO make this less hardcoded
+      this.__socket = app.socket2;
+    } else {
+      this.__socket = app.socket;
     }
 
     this.currentPage = 1; // # TODO goto page on open /
@@ -283,7 +285,7 @@ export class CasperEpaperServerDocument extends LitElement {
     if (!this.__isPrintableDocument()) return;
 
     return {
-      tube: 'casper-print-queue',
+      tube: ( this.document.epaper2 ? 'casper-print-queue-2' : 'casper-print-queue'),
       name: name,
       validity: 3600,
       locale: this.__locale,
@@ -300,7 +302,7 @@ export class CasperEpaperServerDocument extends LitElement {
         number_of_copies: chapter.number_of_copies || 1,
         jsonapi: {
           // TODO extract list of relationships from the report!!!! // TODO NO TOCONLINE
-          urn: 'https://app.toconline.pt/' + chapter.path + (chapter.path.indexOf('?') != -1 ? '&' : '?') + ((undefined !== chapter.params && '' !== chapter.params) ? chapter.params : 'include=lines'),
+          urn: 'https://app.toconline.pt/' + chapter.path + (chapter.path.indexOf('?') != -1 ? '&' : '?') + ((undefined !== chapter.params && '' !== chapter.params) ? chapter.params : this.document.epaper2 ? '' : 'include=lines'),
           prefix: null,
           user_id: null,
           entity_id: null,
@@ -489,6 +491,12 @@ export class CasperEpaperServerDocument extends LitElement {
    * @param {number} pageNumber page starts at 1
    */
   async __openChapter (pageNumber) {
+    if (this.__chapter && this.__chapter.path.includes('commercial_sales_documents_for_print')) {
+      let url = new URL('localhost:' + this.__chapter.path);
+      url.searchParams.append('filter[from_epaper]', 'true');
+      this.__chapter.path = url.pathname + url.search;
+    }
+
     this.loading = true;
 
     this._servertip.enabled = false;
@@ -536,6 +544,7 @@ export class CasperEpaperServerDocument extends LitElement {
     response = await this._socket.loadDocument({
       id:       this.documentId,
       editable: this.__chapter.editable,
+      limit:    this.__chapter.limit,
       path:     this.__chapter.path,
       scale:    this.__sx,
       focus:    this.__openFocus,
@@ -1958,8 +1967,12 @@ export class CasperEpaperServerDocument extends LitElement {
             img.onerror = function() {
               this._images[img_info._path] = undefined;
             }.bind(this);
-            img.src = this._uploaded_assets_url + img_info._path;
-            this._images[img_info._path] = img;
+            if (img_info._path.includes('/file/c')) {
+              img.src = img_info._path;
+            } else {
+              img.src = this._uploaded_assets_url + img_info._path;
+            }
+            this.__images[img_info._path] = img;
           }
           if ( img && img.complete && typeof img.naturalWidth !== undefined && img.naturalWidth !== 0 ) {
             try {
@@ -2258,6 +2271,15 @@ export class CasperEpaperServerDocument extends LitElement {
 
       case 'D':
         this._onPaintMessage(a_message);
+        break;
+
+      case 'J':
+        this.__r_idx   = 2; // J:
+        this.__message = a_message;
+        if ( this._svgRenderer ) {
+          const page = JSON.parse(this.__message.substring(this.__r_idx, this.__message.length - 1));
+          this._svgRenderer.renderPage(page);
+        }
         break;
 
       default:

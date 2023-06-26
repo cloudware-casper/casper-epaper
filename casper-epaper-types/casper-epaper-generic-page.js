@@ -43,6 +43,15 @@ class CasperEpaperGenericPage extends PolymerElement {
   static get properties () {
     return {
       /**
+       * The data that will be used for binding on template.
+       *
+       * @type {Object}
+       */
+      data: {
+        type: Object,
+        value: {}
+      },
+      /**
        * The template that will be stamped by this component.
        *
        * @type {Object}
@@ -61,9 +70,10 @@ class CasperEpaperGenericPage extends PolymerElement {
    */
   __templateChanged (template) {
     const templateClass = templatize(template);
+    const templateClassInstance = new templateClass(this.data);
 
     this.$['template-container'].innerHTML = '';
-    this.$['template-container'].appendChild(new templateClass().root);
+    this.$['template-container'].appendChild(templateClassInstance.root);
   }
 }
 

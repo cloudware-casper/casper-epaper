@@ -153,23 +153,21 @@ class CasperEpaperServertipHelper extends LitElement {
    * If the mouse has stayed within the threshold get the hint, if not just update the reference point.
    */
   async _onOverHandler () {
-    if ( Math.abs(this._center_x - this._last_x) <= this.threshold &&
-         Math.abs(this._center_y - this._last_y) <= this.threshold ) {
-      let socket;
-      if ( 2.0 === this.epaper._socket._version ) { // TODO make this less hardcoded
-        socket = this.epaper.app.socket2;
+    try {
+      if ( Math.abs(this._center_x - this._last_x) <= this.threshold &&
+          Math.abs(this._center_y - this._last_y) <= this.threshold ) {
+        let response = await this.epaperDocument.app.socket.getHint(
+          this.epaperDocument.documentId,
+          this._scalePxToServer * this._center_x,
+          this._scalePxToServer * this._center_y
+        );
+        this._getHintResponse(response);
+        this._resetTimer();
       } else {
-        socket = this.epaper.app.socket;
+        this._updateCenter(this._last_x, this._last_y);
       }
-      let response = await socket.getHint(
-        this.epaper.documentId,
-        this._scalePxToServer * this._center_x,
-        this._scalePxToServer * this._center_y
-      );
-      this._getHintResponse(response);
-      this._resetTimer();
-    } else {
-      this._updateCenter(this._last_x, this._last_y);
+    } catch (e) {
+      console.log(e);
     }
   }
 }

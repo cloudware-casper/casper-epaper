@@ -215,7 +215,7 @@ class CasperEpaper extends PolymerElement {
           position: absolute;
           right: -10px;
           top: 6px;
-          z-index: 5;
+          z-index: 2;
           margin: 0;
           height: 40px;
         }
@@ -265,14 +265,13 @@ class CasperEpaper extends PolymerElement {
         }
 
         .document-checklist {
+          /*width: 450px;*/
           width: 320px;
           position: absolute;
           background: var(--status-red);
           box-shadow: 0 2px 9px 0 rgba(0,0,0,0.50);
           border-radius: 4px;
-          z-index: 2;
           font-size: 13px;
-
           left: 0;
           right: 0;
           top: 12px;
@@ -285,6 +284,7 @@ class CasperEpaper extends PolymerElement {
         .document-checklist:hover {
           background: #ffffff;
           top: 7px;
+          z-index: 2;
           transition: top 200ms linear;
         }
 
@@ -339,10 +339,21 @@ class CasperEpaper extends PolymerElement {
           border-top: 1px #D8D8D8 solid;
           display: flex;
           justify-content: space-between;
+          align-items: center;
         }
 
         .document-checklist li span {
           line-height: 20px;
+        }
+
+        .document-checklist li a {
+          color: var(--links-primary);
+          text-decoration: none;
+        }
+
+        .document-checklist li a:hover {
+          text-decoration: underline;
+          color: var(--links-secondary);
         }
 
         .document-checklist .button{
@@ -401,7 +412,7 @@ class CasperEpaper extends PolymerElement {
       </style>
       <div id="epaper-component-loading-overlay">
         <paper-spinner active></paper-spinner>
-        A carregar o documento
+        [[currentLoadingOverlayText]]
       </div>
 
       <div class="toolbar">
@@ -470,7 +481,46 @@ class CasperEpaper extends PolymerElement {
                 <ul>
                   <template is="dom-repeat" items="[[__currentAttachmentCheckList.tasks]]" index-as="index">
                     <li>
-                      <span>[[item.prop]]</span>
+                      <span style='text-align:left;padding-right: 10px;'>
+
+                        <span><b>[[item.prop]]</b></span>
+                        <template is="dom-if" if="[[item.errors]]">
+
+
+                          <template is="dom-if" if="[[item.errors.translated]]">
+                            <br>
+                            <template is="dom-if" if="[[item.errors.error]]">
+                              <span>[[item.errors.error_description]]</span>
+
+                              <template is="dom-if" if="[[item.errorHandler]]">
+                                <p style="margin: 0;"><a href$="[[item.errorHandler]]" data-click$="[[item.errorHandler]]">[[item.errorLinkText]]</a></p>
+                              </template>
+
+                            </template>
+
+                          </template>
+
+
+                          <template is="dom-if" if="[[!item.errors.translated]]">
+
+                            <template is="dom-if" if="[[item.errors.error]]">
+                              <br>
+                              <i style='color:gray'>[[item.errors.error]] : </i>
+                            </template>
+
+                            <template is="dom-if" if="[[item.errors.error]]">
+                              <span>[[item.errors.error_description]]</span>
+
+                              <template is="dom-if" if="[[item.errorHandler]]">
+                                <p style="margin: 0;"><a href$="[[item.errorHandler]]" data-click$="[[item.errorHandler]]">[[item.errorLinkText]]</a></p>
+                              </template>
+
+                            </template>
+                          </template>
+
+                        </template>
+
+                      </span>
                       <span>
                         <div class='filled-parent'>
                           <div class='filled-centered-child' error$=[[!item.filled]]></div>
@@ -702,6 +752,10 @@ class CasperEpaper extends PolymerElement {
       __loading: {
         type: Boolean,
         observer: '__loadingChanged'
+      },
+      loadingOverlayText: {
+        type: String,
+        value: 'A carregar o documento'
       }
     };
   }
@@ -712,7 +766,7 @@ class CasperEpaper extends PolymerElement {
     this.__epaper = this;
     this.__currentPage = 1;
     this.__totalPageCount = 0;
-    this.__socket = this.app.socket;
+    this.__socket = app.socket || this.app.socket;
     this.openBlankPage();
 
     // Adjust the background color depending on the vendor due to the PDF viewer.
@@ -785,7 +839,7 @@ class CasperEpaper extends PolymerElement {
     this.openGenericPage(this.$['blank-page-template']);
   }
 
-  openGenericPage (template) {
+  openGenericPage (template, data = {}) {
     // Reset the current attachment settings.
     this.__landscape = false;
 
@@ -799,6 +853,7 @@ class CasperEpaper extends PolymerElement {
     this.__enableOrDisableControlButtons({ zoom: true, print: false, paging: false, download: false });
     this.__handleAttachmentNavigationButtons();
 
+    this.$.genericPage.data = data;
     this.$.genericPage.template = template;
   }
 
@@ -851,7 +906,10 @@ class CasperEpaper extends PolymerElement {
    */
   goToPreviousPage () {
     if (this.__currentPage > 1) {
-      this.__currentPage--;
+      this.__currentPage--;      
+      if ( 2.0 === this.__socket._version ) { // [AG] - HB: required on v2...
+        this.__epaper.$.serverDocument.__currentPageChanged(this.__currentPage)
+      }
     }
   }
 
@@ -859,8 +917,13 @@ class CasperEpaper extends PolymerElement {
    * Navigate to the next page.
    */
   goToNextPage () {
-    if (this.__currentPage < this.__totalPageCount) {
+    if ( 2.0 === this.__socket._version ) { // [AG] - HB: required on v2...
       this.__currentPage++;
+      this.__epaper.$.serverDocument.__currentPageChanged(this.__currentPage)
+    } else {
+      if (this.__currentPage < this.__totalPageCount) {
+        this.__currentPage++;
+      }
     }
   }
 
@@ -1027,7 +1090,7 @@ class CasperEpaper extends PolymerElement {
     if (this.isPrintableDocument()) return undefined;
 
     let job = {
-      tube: 'casper-print-queue',
+      tube: ( 2.0 === this.__socket._version ? 'casper-print-queue-2' : 'casper-print-queue' ),
       name: name,
       validity: 3600,
       locale: this._locale,
@@ -1045,13 +1108,20 @@ class CasperEpaper extends PolymerElement {
 
       for (let j = 0; j < _document.chapters.length; j++) {
         _chapter = _document.chapters[j]
+        let urn;
+
+        if ( 2.0 === this.__socket._version ) {
+          urn = _chapter.path;
+        } else {
+          urn = _chapter.path + '?include=lines';
+        }
 
         _print_document = {
           name: _document.name || _document_name || name,
           title: _document.title || _document_name || title,
           jrxml: _chapter.jrxml + '.jrxml',
           jsonapi: {
-            urn: _chapter.path + '?include=lines', // Make this optional on CPQ???
+            urn: urn,
             prefix: null,
             user_id: null,
             company_id: null,
@@ -1429,7 +1499,9 @@ class CasperEpaper extends PolymerElement {
     }
   }
 
-  __displayLoadingOverlay () {
+  __displayLoadingOverlay (text) {
+    this.currentLoadingOverlayText = text ? text : this.loadingOverlayText;
+
     this.__epaperComponentLoadingOverlay.style.display = 'flex';
     this.__epaperComponentLoadingOverlay.style.width = '100%';
     this.__epaperComponentLoadingOverlay.style.height = '100%';
